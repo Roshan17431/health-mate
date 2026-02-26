@@ -34,5 +34,9 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable=false)
     private USER_ROLE role = USER_ROLE.ROLE_PATIENT;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private GENDER gender = GENDER.MALE;
 }
 
