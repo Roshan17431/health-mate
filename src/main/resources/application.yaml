@@ -1,3 +1,17 @@
 spring:
   application:
     name: health-mate
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/healthmate
+    username: root
+    password: roshan17
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
