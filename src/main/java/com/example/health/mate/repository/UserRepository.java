@@ -1,6 +1,6 @@
 package com.example.health.mate.repository;
 
-import com.example.health.mate.entity.User; 
+import com.example.health.mate.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
