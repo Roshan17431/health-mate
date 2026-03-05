@@ -1,7 +1,6 @@
 package com.example.health.mate.repository;
 
 import com.example.health.mate.domain.SlotStatus;
-import com.example.health.mate.entity.Appointment;
 import com.example.health.mate.entity.TimeSlot;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -9,6 +8,7 @@ import java.time.LocalDate;
 
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface TimeSlotRepository extends JpaRepository<TimeSlot, Integer> {
 
@@ -16,12 +16,6 @@ public interface TimeSlotRepository extends JpaRepository<TimeSlot, Integer> {
 
     List<TimeSlot> findByDoctorIdAndSlotDateBetweenAndStatus(Long doctor_id, LocalDate startDate, LocalDate endDate, SlotStatus slotStatus);
 
-    List<TimeSlot> findByStartTime(LocalTime startTime);
-
-    List<TimeSlot> findByEndTime(LocalTime endTime);
-
-    List<TimeSlot> findByStartTimeAndEndTime(LocalTime startTime, LocalTime endTime);
-
-    List<TimeSlot> findByAppointment(Appointment appointment);
-
+    Optional<TimeSlot> findByDoctorIdAndSlotDateAndStartTime(Long doctor_id, LocalDate slot_date, LocalTime startTime);
+    
 }
