@@ -17,5 +17,5 @@ public interface TimeSlotRepository extends JpaRepository<TimeSlot, Integer> {
     List<TimeSlot> findByDoctorIdAndSlotDateBetweenAndStatus(Long doctor_id, LocalDate startDate, LocalDate endDate, SlotStatus slotStatus);
 
     Optional<TimeSlot> findByDoctorIdAndSlotDateAndStartTime(Long doctor_id, LocalDate slot_date, LocalTime startTime);
-    
+
 }
