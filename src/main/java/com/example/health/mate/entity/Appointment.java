@@ -60,4 +60,5 @@ public class Appointment {
     @JoinColumn(name = "time_slot_id")
     @JsonIgnore
     private TimeSlot timeSlot;
+
 }
