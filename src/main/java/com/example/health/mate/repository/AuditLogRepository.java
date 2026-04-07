@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public interface AuditLogRepository extends JpaRepository<TimeSlot, Integer> {
+public interface AuditLogRepository extends JpaRepository<TimeSlot, Long> {
 
     Page<AuditLog> findByUserIdOrderByTimetampDesc(Integer userId, Pageable pageable);
 

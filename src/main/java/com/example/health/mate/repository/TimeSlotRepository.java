@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface TimeSlotRepository extends JpaRepository<TimeSlot, Integer> {
+public interface TimeSlotRepository extends JpaRepository<TimeSlot, Long> {
 
     List<TimeSlot> findByDoctorIdAndSlotDateAndStatus(Long doctor_id, LocalDate slot_date,SlotStatus slotStatus);
 
