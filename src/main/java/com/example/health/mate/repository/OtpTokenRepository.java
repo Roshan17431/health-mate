@@ -15,7 +15,7 @@ public interface OtpTokenRepository extends CrudRepository<OtpToken,Long> {
             OtpPurpose purpose
     );
 
-    // 🔹 Get valid OTP (not used and not expired)
+    // Get valid OTP (not used and not expired)
     Optional<OtpToken> findByEmailAndOtpCodeAndPurposeAndIsUsedFalseAndExpiresAtAfter(
             String email,
             String otpCode,
@@ -23,13 +23,13 @@ public interface OtpTokenRepository extends CrudRepository<OtpToken,Long> {
             LocalDateTime currentTime
     );
 
-    // 🔹 Get all OTPs for email (optional use)
+    //  Get all OTPs for email (optional use)
     List<OtpToken> findByEmail(String email);
 
-    // 🔹 Delete expired OTPs
+    //  Delete expired OTPs
     void deleteByExpiresAtBefore(LocalDateTime time);
 
-    // 🔹 Mark OTP as used (optional helper via fetch + save)
+    //  Mark OTP as used (optional helper via fetch + save)
     Optional<OtpToken> findByEmailAndPurposeAndIsUsedFalse(
             String email,
             OtpPurpose purpose
