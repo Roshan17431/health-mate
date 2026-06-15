@@ -20,9 +20,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Service for appointment booking and lifecycle changes.
- */
+
 @Service
 @Transactional
 public class AppointmentService {
@@ -44,9 +42,7 @@ public class AppointmentService {
         this.patientService = patientService;
     }
 
-    /**
-     * Books an appointment for a doctor and patient.
-     */
+
     public AppointmentDTO createAppointment(AppointmentRequestDTO request) {
         Doctor doctor = doctorService.getDoctorEntity(request.getDoctorId());
         Patient patient = patientService.getPatientEntity(request.getPatientId());
@@ -81,66 +77,50 @@ public class AppointmentService {
         return toDto(appointmentRepository.save(appointment));
     }
 
-    /**
-     * Returns every appointment.
-     */
+
     @Transactional(readOnly = true)
     public List<AppointmentDTO> getAllAppointments() {
         return appointmentRepository.findAll().stream().map(this::toDto).toList();
     }
 
-    /**
-     * Returns one appointment by identifier.
-     */
+
     @Transactional(readOnly = true)
     public AppointmentDTO getAppointmentById(Long id) {
         return toDto(getAppointmentEntity(id));
     }
 
-    /**
-     * Returns one appointment by public appointment code.
-     */
+
     @Transactional(readOnly = true)
     public AppointmentDTO getAppointmentByCode(String appointmentCode) {
         return toDto(appointmentRepository.findByAppointmentCode(appointmentCode)
                 .orElseThrow(() -> new OurException("Appointment not found with code: " + appointmentCode)));
     }
 
-    /**
-     * Returns appointments for a doctor.
-     */
+
     @Transactional(readOnly = true)
     public List<AppointmentDTO> getAppointmentsByDoctor(Long doctorId) {
         return appointmentRepository.findByDoctorId(doctorId).stream().map(this::toDto).toList();
     }
 
-    /**
-     * Returns appointments for a patient.
-     */
+
     @Transactional(readOnly = true)
     public List<AppointmentDTO> getAppointmentsByPatient(Long patientId) {
         return appointmentRepository.findByPatientId(patientId).stream().map(this::toDto).toList();
     }
 
-    /**
-     * Returns appointments matching a status.
-     */
+
     @Transactional(readOnly = true)
     public Page<AppointmentDTO> getAppointmentsByStatus(STATUS status, Pageable pageable) {
         return appointmentRepository.findByStatus(status, pageable).map(this::toDto);
     }
 
-    /**
-     * Returns appointments within a date-time range.
-     */
+
     @Transactional(readOnly = true)
     public Page<AppointmentDTO> getAppointmentsByDateRange(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
         return appointmentRepository.findByDateRange(startDate, endDate, pageable).map(this::toDto);
     }
 
-    /**
-     * Updates appointment status.
-     */
+
     public AppointmentDTO updateStatus(Long id, STATUS status) {
         Appointment appointment = getAppointmentEntity(id);
         appointment.setStatus(status);
@@ -150,16 +130,12 @@ public class AppointmentService {
         return toDto(appointmentRepository.save(appointment));
     }
 
-    /**
-     * Cancels an appointment and releases its time slot.
-     */
+
     public AppointmentDTO cancelAppointment(Long id) {
         return updateStatus(id, STATUS.CANCELED);
     }
 
-    /**
-     * Deletes an appointment.
-     */
+
     public void deleteAppointment(Long id) {
         Appointment appointment = getAppointmentEntity(id);
         if (appointment.getTimeSlot() != null) {
@@ -168,18 +144,14 @@ public class AppointmentService {
         appointmentRepository.delete(appointment);
     }
 
-    /**
-     * Loads an appointment entity for internal service composition.
-     */
+
     @Transactional(readOnly = true)
     public Appointment getAppointmentEntity(Long id) {
         return appointmentRepository.findById(id)
                 .orElseThrow(() -> new OurException("Appointment not found with id: " + id));
     }
 
-    /**
-     * Converts an appointment entity to a DTO without nested entity exposure.
-     */
+
     public AppointmentDTO toDto(Appointment appointment) {
         if (appointment == null) {
             return null;

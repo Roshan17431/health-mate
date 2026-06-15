@@ -10,9 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-/**
- * Service for user profile reads and updates.
- */
+
 @Service
 @Transactional
 public class UserService {
@@ -23,34 +21,26 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    /**
-     * Returns every user as an API-safe DTO.
-     */
+
     @Transactional(readOnly = true)
     public List<UserDTO> getAllUsers() {
         return userRepository.findAll().stream().map(this::toDto).toList();
     }
 
-    /**
-     * Returns one user by identifier.
-     */
+
     @Transactional(readOnly = true)
     public UserDTO getUserById(Long id) {
         return toDto(getUserEntity(id));
     }
 
-    /**
-     * Returns one user by email.
-     */
+
     @Transactional(readOnly = true)
     public UserDTO getUserByEmail(String email) {
         return toDto(userRepository.findByEmail(email)
                 .orElseThrow(() -> new OurException("User not found with email: " + email)));
     }
 
-    /**
-     * Applies profile changes to a user.
-     */
+
     public UserDTO updateUser(Long id, UserUpdateDTO request) {
         User user = getUserEntity(id);
         if (request.getName() != null) user.setName(request.getName());
@@ -61,26 +51,20 @@ public class UserService {
         return toDto(userRepository.save(user));
     }
 
-    /**
-     * Deletes a user profile.
-     */
+
     public void deleteUser(Long id) {
         User user = getUserEntity(id);
         userRepository.delete(user);
     }
 
-    /**
-     * Loads a user entity for internal service composition.
-     */
+
     @Transactional(readOnly = true)
     public User getUserEntity(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new OurException("User not found with id: " + id));
     }
 
-    /**
-     * Converts a user entity to an API-safe DTO without password data.
-     */
+    
     public UserDTO toDto(User user) {
         if (user == null) {
             return null;
