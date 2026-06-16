@@ -64,7 +64,7 @@ public class UserService {
                 .orElseThrow(() -> new OurException("User not found with id: " + id));
     }
 
-    
+
     public UserDTO toDto(User user) {
         if (user == null) {
             return null;
