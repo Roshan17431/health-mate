@@ -13,9 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 
-/**
- * Service for doctor time-slot availability.
- */
+
 @Service
 @Transactional
 public class TimeSlotService {
@@ -28,9 +26,7 @@ public class TimeSlotService {
         this.doctorService = doctorService;
     }
 
-    /**
-     * Creates an available time slot for a doctor.
-     */
+
     public TimeSlotDTO createTimeSlot(TimeSlotRequestDTO request) {
         Doctor doctor = doctorService.getDoctorEntity(request.getDoctorId());
         validateTimeRange(request);
@@ -51,17 +47,13 @@ public class TimeSlotService {
         return toDto(timeSlotRepository.save(timeSlot));
     }
 
-    /**
-     * Returns one time slot by identifier.
-     */
+
     @Transactional(readOnly = true)
     public TimeSlotDTO getTimeSlotById(Long id) {
         return toDto(getTimeSlotEntity(id));
     }
 
-    /**
-     * Returns slots by doctor, date, and status.
-     */
+
     @Transactional(readOnly = true)
     public List<TimeSlotDTO> getSlotsByDoctorDateAndStatus(Long doctorId, LocalDate slotDate, SlotStatus status) {
         return timeSlotRepository.findByDoctorIdAndSlotDateAndStatus(doctorId, slotDate, status)
@@ -70,9 +62,7 @@ public class TimeSlotService {
                 .toList();
     }
 
-    /**
-     * Returns slots by doctor, date range, and status.
-     */
+
     @Transactional(readOnly = true)
     public List<TimeSlotDTO> getSlotsByDoctorDateRangeAndStatus(
             Long doctorId,
@@ -86,18 +76,14 @@ public class TimeSlotService {
                 .toList();
     }
 
-    /**
-     * Updates a time slot status.
-     */
+
     public TimeSlotDTO updateStatus(Long id, SlotStatus status) {
         TimeSlot timeSlot = getTimeSlotEntity(id);
         timeSlot.setStatus(status);
         return toDto(timeSlotRepository.save(timeSlot));
     }
 
-    /**
-     * Deletes a time slot.
-     */
+
     public void deleteTimeSlot(Long id) {
         TimeSlot timeSlot = getTimeSlotEntity(id);
         if (timeSlot.getAppointment() != null) {
@@ -106,18 +92,14 @@ public class TimeSlotService {
         timeSlotRepository.delete(timeSlot);
     }
 
-    /**
-     * Loads a time slot entity for internal service composition.
-     */
+
     @Transactional(readOnly = true)
     public TimeSlot getTimeSlotEntity(Long id) {
         return timeSlotRepository.findById(id)
                 .orElseThrow(() -> new OurException("Time slot not found with id: " + id));
     }
 
-    /**
-     * Converts a time slot entity to a DTO without nested entity exposure.
-     */
+
     public TimeSlotDTO toDto(TimeSlot timeSlot) {
         if (timeSlot == null) {
             return null;

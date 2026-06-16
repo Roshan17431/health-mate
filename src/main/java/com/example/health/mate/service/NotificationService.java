@@ -11,9 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-/**
- * Service for user notifications.
- */
+
 @Service
 @Transactional
 public class NotificationService {
@@ -26,9 +24,7 @@ public class NotificationService {
         this.userService = userService;
     }
 
-    /**
-     * Creates a notification for a user.
-     */
+
     public NotificationDTO createNotification(NotificationRequestDTO request) {
         User user = userService.getUserEntity(request.getUserId());
         Notification notification = new Notification();
@@ -38,25 +34,19 @@ public class NotificationService {
         return toDto(notificationRepository.save(notification));
     }
 
-    /**
-     * Returns one notification by identifier.
-     */
+
     @Transactional(readOnly = true)
     public NotificationDTO getNotificationById(Long id) {
         return toDto(getNotificationEntity(id));
     }
 
-    /**
-     * Returns notifications for a user in newest-first order.
-     */
+
     @Transactional(readOnly = true)
     public List<NotificationDTO> getNotificationsByUser(Long userId) {
         return notificationRepository.findByUserIdOrderByTimestampDesc(userId).stream().map(this::toDto).toList();
     }
 
-    /**
-     * Returns unread notifications for a user in newest-first order.
-     */
+
     @Transactional(readOnly = true)
     public List<NotificationDTO> getUnreadNotificationsByUser(Long userId) {
         return notificationRepository.findByUserIdAndIsReadFalseOrderByTimestampDesc(userId)
@@ -65,42 +55,32 @@ public class NotificationService {
                 .toList();
     }
 
-    /**
-     * Counts unread notifications for a user.
-     */
+
     @Transactional(readOnly = true)
     public Long countUnreadNotifications(Long userId) {
         return notificationRepository.countByUserIdAndIsReadFalse(userId);
     }
 
-    /**
-     * Marks one notification as read.
-     */
+
     public NotificationDTO markAsRead(Long id) {
         Notification notification = getNotificationEntity(id);
         notification.setIsRead(Boolean.TRUE);
         return toDto(notificationRepository.save(notification));
     }
 
-    /**
-     * Deletes one notification.
-     */
+
     public void deleteNotification(Long id) {
         notificationRepository.delete(getNotificationEntity(id));
     }
 
-    /**
-     * Loads a notification entity for internal service composition.
-     */
+
     @Transactional(readOnly = true)
     public Notification getNotificationEntity(Long id) {
         return notificationRepository.findById(id)
                 .orElseThrow(() -> new OurException("Notification not found with id: " + id));
     }
 
-    /**
-     * Converts a notification entity to a DTO without nested entity exposure.
-     */
+
     public NotificationDTO toDto(Notification notification) {
         if (notification == null) {
             return null;

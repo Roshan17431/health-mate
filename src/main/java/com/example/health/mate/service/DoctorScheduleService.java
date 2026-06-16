@@ -12,9 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.DayOfWeek;
 import java.util.List;
 
-/**
- * Service for doctor recurring schedule management.
- */
+
 @Service
 @Transactional
 public class DoctorScheduleService {
@@ -27,9 +25,7 @@ public class DoctorScheduleService {
         this.doctorService = doctorService;
     }
 
-    /**
-     * Creates a recurring schedule for a doctor.
-     */
+
     public DoctorScheduleDTO createSchedule(DoctorScheduleRequestDTO request) {
         Doctor doctor = doctorService.getDoctorEntity(request.getDoctorId());
         validateTimeRange(request);
@@ -46,25 +42,19 @@ public class DoctorScheduleService {
         return toDto(doctorScheduleRepository.save(schedule));
     }
 
-    /**
-     * Returns one schedule by identifier.
-     */
+
     @Transactional(readOnly = true)
     public DoctorScheduleDTO getScheduleById(Long id) {
         return toDto(getScheduleEntity(id));
     }
 
-    /**
-     * Returns active schedules for a doctor.
-     */
+
     @Transactional(readOnly = true)
     public List<DoctorScheduleDTO> getActiveSchedulesByDoctor(Long doctorId) {
         return doctorScheduleRepository.findByDoctorIdAndIsActiveTrue(doctorId).stream().map(this::toDto).toList();
     }
 
-    /**
-     * Returns active schedules for a doctor and day of week.
-     */
+
     @Transactional(readOnly = true)
     public List<DoctorScheduleDTO> getActiveSchedulesByDoctorAndDay(Long doctorId, DayOfWeek dayOfWeek) {
         return doctorScheduleRepository.findByDoctorIdAndDayOfWeekAndIsActiveTrue(doctorId, dayOfWeek)
@@ -73,9 +63,6 @@ public class DoctorScheduleService {
                 .toList();
     }
 
-    /**
-     * Updates a recurring schedule.
-     */
     public DoctorScheduleDTO updateSchedule(Long id, DoctorScheduleRequestDTO request) {
         DoctorSchedule schedule = getScheduleEntity(id);
         validateTimeRange(request);
@@ -86,34 +73,26 @@ public class DoctorScheduleService {
         return toDto(doctorScheduleRepository.save(schedule));
     }
 
-    /**
-     * Enables or disables a schedule.
-     */
+
     public DoctorScheduleDTO setScheduleActive(Long id, boolean active) {
         DoctorSchedule schedule = getScheduleEntity(id);
         schedule.setIsActive(active);
         return toDto(doctorScheduleRepository.save(schedule));
     }
 
-    /**
-     * Deletes a schedule.
-     */
+
     public void deleteSchedule(Long id) {
         doctorScheduleRepository.delete(getScheduleEntity(id));
     }
 
-    /**
-     * Loads a schedule entity for internal service composition.
-     */
+
     @Transactional(readOnly = true)
     public DoctorSchedule getScheduleEntity(Long id) {
         return doctorScheduleRepository.findById(id)
                 .orElseThrow(() -> new OurException("Doctor schedule not found with id: " + id));
     }
 
-    /**
-     * Converts a schedule entity to a DTO without nested entity exposure.
-     */
+
     public DoctorScheduleDTO toDto(DoctorSchedule schedule) {
         if (schedule == null) {
             return null;
