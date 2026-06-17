@@ -61,7 +61,7 @@ public class AuthService {
         return buildAuthResponse(token, savedUser);
     }
 
-    
+
     @Transactional(readOnly = true)
     public AuthResponseDTO login(AuthRequestDTO request) {
         try {
