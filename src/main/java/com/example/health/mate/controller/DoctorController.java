@@ -18,9 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/**
- * REST endpoints for doctor profile operations.
- */
+
 @RestController
 @RequestMapping("/api/doctors")
 public class DoctorController {

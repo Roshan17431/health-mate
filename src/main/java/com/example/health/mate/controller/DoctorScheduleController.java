@@ -20,9 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.DayOfWeek;
 import java.util.List;
 
-/**
- * REST endpoints for recurring doctor schedules.
- */
+
 @RestController
 @RequestMapping("/api/doctor-schedules")
 public class DoctorScheduleController {

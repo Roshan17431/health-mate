@@ -21,9 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 import java.util.List;
 
-/**
- * REST endpoints for doctor time slots.
- */
+
 @RestController
 @RequestMapping("/api/time-slots")
 public class TimeSlotController {

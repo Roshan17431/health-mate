@@ -18,9 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/**
- * REST endpoints for OTP token creation and verification.
- */
+
 @RestController
 @RequestMapping("/api/otp")
 public class OtpTokenController {

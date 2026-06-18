@@ -1,10 +1,10 @@
 package com.example.health.mate.security;
 
+import com.example.health.mate.config.JwtProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -19,15 +19,10 @@ import java.util.Map;
 @Service
 public class JwtService {
 
-    private final String jwtSecret;
-    private final long jwtExpirationMs;
+    private final JwtProperties jwtProperties;
 
-    public JwtService(
-            @Value("${security.jwt.secret}") String jwtSecret,
-            @Value("${security.jwt.expiration-ms}") long jwtExpirationMs
-    ) {
-        this.jwtSecret = jwtSecret;
-        this.jwtExpirationMs = jwtExpirationMs;
+    public JwtService(JwtProperties jwtProperties) {
+        this.jwtProperties = jwtProperties;
     }
 
 
@@ -40,7 +35,7 @@ public class JwtService {
         claims.put("authorities", authorities);
 
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
+        Date expiryDate = new Date(now.getTime() + jwtProperties.getExpirationMs());
 
         return Jwts.builder()
                 .claims(claims)
@@ -64,7 +59,7 @@ public class JwtService {
 
 
     public long getJwtExpirationMs() {
-        return jwtExpirationMs;
+        return jwtProperties.getExpirationMs();
     }
 
     private boolean isTokenExpired(String token) {
@@ -80,7 +75,7 @@ public class JwtService {
     }
 
     private SecretKey getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
+        byte[] keyBytes = Decoders.BASE64.decode(jwtProperties.getSecret());
         return Keys.hmacShaKeyFor(keyBytes);
     }
 }

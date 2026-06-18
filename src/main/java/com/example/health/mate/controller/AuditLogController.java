@@ -21,9 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * REST endpoints for audit log operations.
- */
+
 @RestController
 @RequestMapping("/api/audit-logs")
 public class AuditLogController {

@@ -18,9 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 
-/**
- * REST endpoints for user notifications.
- */
+
 @RestController
 @RequestMapping("/api/notifications")
 public class NotificationController {

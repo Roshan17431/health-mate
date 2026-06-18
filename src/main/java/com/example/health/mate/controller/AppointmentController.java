@@ -23,9 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * REST endpoints for appointment booking and lifecycle operations.
- */
+
 @RestController
 @RequestMapping("/api/appointments")
 public class AppointmentController {
