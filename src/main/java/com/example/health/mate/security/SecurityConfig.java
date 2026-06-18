@@ -33,6 +33,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/auth/**",
+                                "/api/otp/send",
+                                "/api/otp/verify",
                                 "/actuator/health",
                                 "/actuator/info"
                         ).permitAll()
