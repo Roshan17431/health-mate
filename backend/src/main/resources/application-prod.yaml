@@ -1,8 +1,12 @@
 spring:
   jpa:
+    defer-datasource-initialization: true
     hibernate:
       ddl-auto: ${HIBERNATE_DDL_AUTO:update}
     show-sql: false
+  sql:
+    init:
+      mode: ${SQL_INIT_MODE:always}
 
 management:
   endpoints:

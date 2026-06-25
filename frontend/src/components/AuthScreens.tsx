@@ -5,7 +5,7 @@
 
 import React, { useState } from "react";
 import { Lock, Mail, Phone, Calendar, User, MapPin, KeyRound, Check, FileText, HeartPulse, ShieldCheck, Activity } from "lucide-react";
-import { loginUser, registerUser, sendOtp, verifyOtp, getSimulatedCode } from "../api/client";
+import { loginUser, registerUser, sendOtp, verifyOtp } from "../api/client";
 import { RegisterRequestDTO, Gender, UserRole, OtpPurpose } from "../types";
 import { ApiErrorAlert } from "./CommonUI";
 
@@ -25,8 +25,8 @@ export const AuthScreens: React.FC<AuthScreensProps> = ({ onAuthSuccess, initial
   const [feedbackMsg, setFeedbackMsg] = useState("");
 
   // Login inputs
-  const [loginEmail, setLoginEmail] = useState("patient@healthmate.com");
-  const [loginPassword, setLoginPassword] = useState("patient123");
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
 
   // Registration inputs
   const [regName, setRegName] = useState("");
@@ -43,7 +43,6 @@ export const AuthScreens: React.FC<AuthScreensProps> = ({ onAuthSuccess, initial
   const [otpPurpose, setOtpPurpose] = useState<OtpPurpose>("PASSWORD_RESET");
   const [otpCode, setOtpCode] = useState("");
   const [otpSent, setOtpSent] = useState(false);
-  const [discoveredDemoCode, setDiscoveredDemoCode] = useState<string | undefined>(undefined);
 
   // Handles Login
   const handleLoginSubmit = async (e: React.FormEvent) => {
@@ -100,7 +99,7 @@ export const AuthScreens: React.FC<AuthScreensProps> = ({ onAuthSuccess, initial
     }
   };
 
-  // Handles sending simulated or real OTP
+  // Handles sending backend-issued OTP codes.
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otpEmail) {
@@ -113,10 +112,6 @@ export const AuthScreens: React.FC<AuthScreensProps> = ({ onAuthSuccess, initial
       await sendOtp({ email: otpEmail, purpose: otpPurpose });
       setOtpSent(true);
       setFeedbackMsg(`Verification OTP code issued successfully to ${otpEmail}!`);
-
-      // If in demo mode, retrieve code directly so they can test it instantly
-      const mockCode = getSimulatedCode(otpEmail, otpPurpose);
-      setDiscoveredDemoCode(mockCode);
     } catch (err) {
       setError(err);
     } finally {
@@ -134,20 +129,19 @@ export const AuthScreens: React.FC<AuthScreensProps> = ({ onAuthSuccess, initial
     setError(null);
     setLoading(true);
     try {
-      const result = await verifyOtp({
+      await verifyOtp({
         email: otpEmail,
         otpCode: otpCode,
         purpose: otpPurpose,
       });
 
-      setFeedbackMsg("Verification success! Simulation approved authorization.");
+      setFeedbackMsg("Verification success.");
       // Auto-populate & switch to password entry
       setLoginEmail(otpEmail);
-      setLoginPassword("password123"); // Mock reset password to this default
+      setLoginPassword("");
       setIsOtpView(false);
       setIsRegister(false);
       setError(null);
-      alert(`OTP successfully verified! For demo purposes, we have pre-configured a temporary password reset code ("password123") you can now sign in with.`);
     } catch (err) {
       setError(err);
     } finally {
@@ -230,7 +224,7 @@ export const AuthScreens: React.FC<AuthScreensProps> = ({ onAuthSuccess, initial
                   Interactive Role Capabilities
                 </span>
                 <span className="text-[8px] bg-blue-600 text-white font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  Live Previewer
+                  Backend API
                 </span>
               </div>
 
@@ -269,17 +263,17 @@ export const AuthScreens: React.FC<AuthScreensProps> = ({ onAuthSuccess, initial
               <div className="text-xs text-slate-600 min-h-[58px] transition-all duration-205">
                 {activeTab === "patient" && (
                   <p className="animate-fade-in text-[11px] leading-relaxed">
-                    <strong className="text-slate-800">Patient Dashboard</strong>: Schedule immediate practitioner visits, input medical query logs, self-register profile records, and view approved consult diagnosis reports. Try test login <code className="bg-white/80 px-1 py-0.5 rounded text-blue-700 font-mono font-bold text-[10px]">patient@healthmate.com</code>.
+                    <strong className="text-slate-800">Patient Dashboard</strong>: Schedule immediate practitioner visits, input medical query logs, self-register profile records, and view approved consult diagnosis reports.
                   </p>
                 )}
                 {activeTab === "doctor" && (
                   <p className="animate-fade-in text-[11px] leading-relaxed">
-                    <strong className="text-slate-800">Doctor Workspace</strong>: Define flexible appointment time slots, review patient consult symptom charts, write real-time treatments or prescriptions, and organize patient lists. Try test login <code className="bg-white/80 px-1 py-0.5 rounded text-blue-700 font-mono font-bold text-[10px]">doctor@healthmate.com</code>.
+                    <strong className="text-slate-800">Doctor Workspace</strong>: Define flexible appointment time slots, review patient consult symptom charts, write real-time treatments or prescriptions, and organize patient lists.
                   </p>
                 )}
                 {activeTab === "admin" && (
                   <p className="animate-fade-in text-[11px] leading-relaxed">
-                    <strong className="text-slate-800">System Admin Control</strong>: Unrestricted tracking of clinic usage metric charts, HIPAA compliance security checklists, operator profile directories, and diagnostic status monitors. Try test login <code className="bg-white/80 px-1 py-0.5 rounded text-blue-700 font-mono font-bold text-[10px]">admin@healthmate.com</code>.
+                    <strong className="text-slate-800">System Admin Control</strong>: Unrestricted tracking of clinic usage metric charts, HIPAA compliance security checklists, operator profile directories, and diagnostic status monitors.
                   </p>
                 )}
               </div>
@@ -389,21 +383,6 @@ export const AuthScreens: React.FC<AuthScreensProps> = ({ onAuthSuccess, initial
                     A 6-digit secret code has been dispatched. Enter it below to complete authorization.
                   </p>
 
-                  {/* HIGH-FIDELITY DEMO TOOLTIP BOX */}
-                  {discoveredDemoCode && (
-                    <div className="p-3 bg-amber-50 rounded-lg border border-amber-100 text-amber-800 mt-2 mb-2 animate-fade-in">
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-amber-900 mb-1">
-                        🔒 Demo Mode Simulator Access
-                      </p>
-                      <p className="text-xs">
-                        The simulated secure verification OTP dispatched is:{" "}
-                        <span className="font-mono bg-white px-2 py-0.5 rounded border border-amber-200 font-bold text-amber-900 text-sm tracking-widest">
-                          {discoveredDemoCode}
-                        </span>
-                      </p>
-                    </div>
-                  )}
-
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                       OTP Verification Code
@@ -448,46 +427,6 @@ export const AuthScreens: React.FC<AuthScreensProps> = ({ onAuthSuccess, initial
                 <p className="text-slate-600 text-sm">Please log in to manage schedules, patients, or dashboards.</p>
               </div>
 
-              {/* DEMO ACCOUNTS HELPER BOX */}
-              <div className="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs shadow-xs">
-                <p className="font-bold text-slate-800 uppercase tracking-widest mb-2.5">💡 Quick-Test Demo Access Gateways</p>
-                <div className="grid grid-cols-1 gap-2.5 md:grid-cols-3">
-                  <button
-                    onClick={() => {
-                      setLoginEmail("patient@healthmate.com");
-                      setLoginPassword("patient123");
-                    }}
-                    type="button"
-                    className="p-3 border border-slate-200 hover:border-blue-400 rounded-lg bg-white text-left text-slate-600 hover:text-blue-600 transition shadow-xs cursor-pointer"
-                  >
-                    <span className="font-bold block text-slate-800 mb-0.5">🧑‍🦽 Patient</span>
-                    patient@healthmate.com
-                  </button>
-                  <button
-                    onClick={() => {
-                      setLoginEmail("doctor@healthmate.com");
-                      setLoginPassword("doctor123");
-                    }}
-                    type="button"
-                    className="p-3 border border-slate-200 hover:border-blue-400 rounded-lg bg-white text-left text-slate-600 hover:text-blue-600 transition shadow-xs cursor-pointer"
-                  >
-                    <span className="font-bold block text-slate-800 mb-0.5">🥼 Doctor</span>
-                    doctor@healthmate.com
-                  </button>
-                  <button
-                    onClick={() => {
-                      setLoginEmail("admin@healthmate.com");
-                      setLoginPassword("admin123");
-                    }}
-                    type="button"
-                    className="p-3 border border-slate-200 hover:border-blue-400 rounded-lg bg-white text-left text-slate-600 hover:text-blue-600 transition shadow-xs cursor-pointer"
-                  >
-                    <span className="font-bold block text-slate-800 mb-0.5">💼 Admin</span>
-                    admin@healthmate.com
-                  </button>
-                </div>
-              </div>
-
               <form onSubmit={handleLoginSubmit} className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
@@ -517,7 +456,6 @@ export const AuthScreens: React.FC<AuthScreensProps> = ({ onAuthSuccess, initial
                         setIsOtpView(true);
                         setOtpSent(false);
                         setOtpEmail(loginEmail);
-                        setDiscoveredDemoCode(undefined);
                       }}
                       className="text-xs font-bold text-blue-600 hover:underline"
                     >

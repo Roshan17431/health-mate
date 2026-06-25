@@ -1,5 +1,5 @@
 {
   "name": "Health Mate",
-  "description": "Healthcare management system frontend for patients, doctors, and admins. Supports live API communication and interactive client-side demo simulation.",
+  "description": "Healthcare management system frontend for patients, doctors, and admins. Uses the Health Mate backend API for all data operations.",
   "requestFramePermissions": []
 }

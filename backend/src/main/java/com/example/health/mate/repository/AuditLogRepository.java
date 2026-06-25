@@ -12,6 +12,8 @@ import java.util.List;
 @Repository
 public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
 
+    List<AuditLog> findAllByOrderByTimestampDesc();
+
     Page<AuditLog> findByUserIdOrderByTimestampDesc(Long userId, Pageable pageable);
 
     List<AuditLog> findByTimestampBetween(LocalDateTime start, LocalDateTime end);

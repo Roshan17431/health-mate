@@ -15,10 +15,8 @@ import {
   fetchPatients,
   fetchAppointments,
   cancelAppointment,
-  deleteAppointment,
   createNotification,
-  getDB, // to view logs or latest lists easily
-  createAuditLog,
+  fetchAuditLogs,
 } from "../api/client";
 import { UserDTO, DoctorDTO, PatientDTO, AppointmentDTO, AuditLogDTO, UserRole, Gender } from "../types";
 import { StatusBadge, LoadingState, EmptyState, ApiErrorAlert, ConfirmDialog } from "./CommonUI";
@@ -59,22 +57,18 @@ export const DashboardAdmin: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const [u, d, p, a] = await Promise.all([
+      const [u, d, p, a, logs] = await Promise.all([
         fetchUsers(),
         fetchDoctors(),
         fetchPatients(),
         fetchAppointments(),
+        fetchAuditLogs(),
       ]);
       setUsers(u);
       setDoctors(d);
       setPatients(p);
       setAppointments(a.reverse());
-
-      // Read simulated audit logs
-      const db = (window as any).localStorage?.getItem("healthmate_demo_db");
-      if (db) {
-        setAuditLogs(JSON.parse(db).auditLogs.reverse());
-      }
+      setAuditLogs(logs);
     } catch (err) {
       setError(err);
     } finally {

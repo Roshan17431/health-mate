@@ -51,17 +51,9 @@ export const DashboardDoctor: React.FC<DashboardDoctorProps> = ({ user }) => {
       let matchedDoc = allDoctors.find((d) => d.userId === user.id);
 
       if (!matchedDoc) {
-        // Fallback simulate creation if not exists
-        const fallbackId = allDoctors.length + 1;
-        matchedDoc = {
-          id: fallbackId,
-          experience: 8,
-          availableHours: "09:00-17:00",
-          specialization: "General Medicine",
-          userId: user.id,
-          name: user.name,
-          email: user.email,
-          phone: user.phoneNumber,
+        throw {
+          statusCode: 404,
+          message: "No doctor profile exists for this user. Ask an administrator to link this account to a doctor profile.",
         };
       }
 

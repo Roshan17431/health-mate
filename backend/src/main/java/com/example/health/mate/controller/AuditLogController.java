@@ -37,6 +37,11 @@ public class AuditLogController {
         return ResponseEntity.status(HttpStatus.CREATED).body(auditLogService.createAuditLog(request));
     }
 
+    @GetMapping
+    public ResponseEntity<List<AuditLogDTO>> getAllAuditLogs() {
+        return ResponseEntity.ok(auditLogService.getAllAuditLogs());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<AuditLogDTO> getAuditLogById(@PathVariable Long id) {
         return ResponseEntity.ok(auditLogService.getAuditLogById(id));

@@ -10,6 +10,9 @@ spring:
       ddl-auto: create-drop
     show-sql: false
     open-in-view: false
+  sql:
+    init:
+      mode: never
 
 security:
   jwt:

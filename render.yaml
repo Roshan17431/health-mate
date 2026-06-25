@@ -26,6 +26,8 @@ services:
         sync: false
       - key: HIBERNATE_DDL_AUTO
         value: update
+      - key: SQL_INIT_MODE
+        value: always
   - type: web
     name: health-mate-frontend
     runtime: static

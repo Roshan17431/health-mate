@@ -45,6 +45,11 @@ public class AuditLogService {
         return toDto(getAuditLogEntity(id));
     }
 
+    @Transactional(readOnly = true)
+    public List<AuditLogDTO> getAllAuditLogs() {
+        return auditLogRepository.findAllByOrderByTimestampDesc().stream().map(this::toDto).toList();
+    }
+
 
     @Transactional(readOnly = true)
     public Page<AuditLogDTO> getAuditLogsByUser(Long userId, Pageable pageable) {
