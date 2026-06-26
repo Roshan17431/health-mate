@@ -27,17 +27,20 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final JwtService jwtService;
+    private final com.example.health.mate.repository.PatientRepository patientRepository;
 
     public AuthService(
             AuthenticationManager authenticationManager,
             PasswordEncoder passwordEncoder,
             UserRepository userRepository,
-            JwtService jwtService
+            JwtService jwtService,
+            com.example.health.mate.repository.PatientRepository patientRepository
     ) {
         this.authenticationManager = authenticationManager;
         this.passwordEncoder = passwordEncoder;
         this.userRepository = userRepository;
         this.jwtService = jwtService;
+        this.patientRepository = patientRepository;
     }
 
 
@@ -57,6 +60,13 @@ public class AuthService {
         user.setAddress(request.getAddress());
 
         User savedUser = userRepository.save(user);
+
+        if (savedUser.getRole() == USER_ROLE.ROLE_PATIENT) {
+            com.example.health.mate.entity.Patient patient = new com.example.health.mate.entity.Patient();
+            patient.setUser(savedUser);
+            patientRepository.save(patient);
+        }
+
         String token = jwtService.generateToken(savedUser);
         return buildAuthResponse(token, savedUser);
     }
@@ -74,6 +84,15 @@ public class AuthService {
 
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new OurException("Invalid email or password"));
+
+        if (user.getRole() == USER_ROLE.ROLE_PATIENT) {
+            if (!patientRepository.existsById(user.getId())) {
+                com.example.health.mate.entity.Patient patient = new com.example.health.mate.entity.Patient();
+                patient.setUser(user);
+                patientRepository.save(patient);
+            }
+        }
+
         String token = jwtService.generateToken(user);
         return buildAuthResponse(token, user);
     }
