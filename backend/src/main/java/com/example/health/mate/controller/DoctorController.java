@@ -44,6 +44,11 @@ public class DoctorController {
         return ResponseEntity.ok(doctorService.getAllDoctors());
     }
 
+    @GetMapping("/specializations")
+    public ResponseEntity<List<String>> getAllSpecializations() {
+        return ResponseEntity.ok(doctorService.getAllSpecializations());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<DoctorDTO> getDoctorById(@PathVariable Long id) {
         return ResponseEntity.ok(doctorService.getDoctorById(id));

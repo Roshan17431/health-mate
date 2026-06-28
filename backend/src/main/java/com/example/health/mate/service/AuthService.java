@@ -5,8 +5,10 @@ import com.example.health.mate.dto.AuthRequestDTO;
 import com.example.health.mate.dto.AuthResponseDTO;
 import com.example.health.mate.dto.RegisterRequestDTO;
 import com.example.health.mate.dto.UserDTO;
+import com.example.health.mate.entity.Patient;
 import com.example.health.mate.entity.User;
 import com.example.health.mate.exception.OurException;
+import com.example.health.mate.repository.PatientRepository;
 import com.example.health.mate.repository.UserRepository;
 import com.example.health.mate.security.JwtService;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -27,14 +29,14 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final JwtService jwtService;
-    private final com.example.health.mate.repository.PatientRepository patientRepository;
+    private final PatientRepository patientRepository;
 
     public AuthService(
             AuthenticationManager authenticationManager,
             PasswordEncoder passwordEncoder,
             UserRepository userRepository,
             JwtService jwtService,
-            com.example.health.mate.repository.PatientRepository patientRepository
+            PatientRepository patientRepository
     ) {
         this.authenticationManager = authenticationManager;
         this.passwordEncoder = passwordEncoder;
@@ -62,9 +64,7 @@ public class AuthService {
         User savedUser = userRepository.save(user);
 
         if (savedUser.getRole() == USER_ROLE.ROLE_PATIENT) {
-            com.example.health.mate.entity.Patient patient = new com.example.health.mate.entity.Patient();
-            patient.setUser(savedUser);
-            patientRepository.save(patient);
+            ensurePatientProfile(savedUser);
         }
 
         String token = jwtService.generateToken(savedUser);
@@ -72,7 +72,6 @@ public class AuthService {
     }
 
 
-    @Transactional(readOnly = true)
     public AuthResponseDTO login(AuthRequestDTO request) {
         try {
             authenticationManager.authenticate(
@@ -86,11 +85,7 @@ public class AuthService {
                 .orElseThrow(() -> new OurException("Invalid email or password"));
 
         if (user.getRole() == USER_ROLE.ROLE_PATIENT) {
-            if (!patientRepository.existsById(user.getId())) {
-                com.example.health.mate.entity.Patient patient = new com.example.health.mate.entity.Patient();
-                patient.setUser(user);
-                patientRepository.save(patient);
-            }
+            ensurePatientProfile(user);
         }
 
         String token = jwtService.generateToken(user);
@@ -99,6 +94,14 @@ public class AuthService {
 
     private AuthResponseDTO buildAuthResponse(String token, User user) {
         return new AuthResponseDTO(token, TOKEN_TYPE, jwtService.getJwtExpirationMs(), toUserDto(user));
+    }
+
+    private void ensurePatientProfile(User user) {
+        if (!patientRepository.existsByUserId(user.getId())) {
+            Patient patient = new Patient();
+            patient.setUser(user);
+            patientRepository.save(patient);
+        }
     }
 
     private UserDTO toUserDto(User user) {

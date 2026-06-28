@@ -54,10 +54,9 @@ public class PatientService {
     }
 
 
-    @Transactional(readOnly = true)
     public PatientDTO getPatientByUserId(Long userId) {
         return toDto(patientRepository.findByUserId(userId)
-                .orElseThrow(() -> new OurException("Patient not found for user id: " + userId)));
+                .orElseGet(() -> createMissingPatientProfile(userId)));
     }
 
 
@@ -86,5 +85,16 @@ public class PatientService {
                 patient.getCreatedAt(),
                 patient.getUpdatedAt()
         );
+    }
+
+    private Patient createMissingPatientProfile(Long userId) {
+        User user = userService.getUserEntity(userId);
+        if (user.getRole() != USER_ROLE.ROLE_PATIENT) {
+            throw new OurException("Patient not found for user id: " + userId);
+        }
+
+        Patient patient = new Patient();
+        patient.setUser(user);
+        return patientRepository.save(patient);
     }
 }

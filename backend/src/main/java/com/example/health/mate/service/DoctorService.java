@@ -55,7 +55,13 @@ public class DoctorService {
 
     @Transactional(readOnly = true)
     public List<DoctorDTO> getDoctorsBySpecialization(String specialization) {
-        return doctorRepository.findBySpecialization(specialization).stream().map(this::toDto).toList();
+        return doctorRepository.findBySpecializationIgnoreCase(specialization).stream().map(this::toDto).toList();
+    }
+
+
+    @Transactional(readOnly = true)
+    public List<String> getAllSpecializations() {
+        return doctorRepository.findDistinctSpecializations();
     }
 
 
