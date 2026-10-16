@@ -26,4 +26,6 @@ public class OtpTokenDTO {
 
     private LocalDateTime usedAt;
 
+    private String resetToken;
+
 }

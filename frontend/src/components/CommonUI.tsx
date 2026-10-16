@@ -20,31 +20,31 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
 
   switch (status) {
     case "SCHEDULED":
-      bgClass = "bg-sky-50 text-sky-700 border-sky-150";
+      bgClass = "bg-sky-50 text-sky-700 border-sky-100";
       dotClass = "bg-sky-500";
       break;
     case "CONFIRMED":
-      bgClass = "bg-emerald-50 text-emerald-700 border-emerald-150";
+      bgClass = "bg-emerald-50 text-emerald-700 border-emerald-100";
       dotClass = "bg-emerald-500";
       break;
     case "COMPLETED":
-      bgClass = "bg-slate-50 text-slate-600 border-slate-250";
+      bgClass = "bg-slate-50 text-slate-600 border-slate-200";
       dotClass = "bg-slate-400";
       break;
     case "CANCELED":
-      bgClass = "bg-rose-50 text-rose-700 border-rose-150";
+      bgClass = "bg-rose-50 text-rose-700 border-rose-100";
       dotClass = "bg-rose-500";
       break;
     case "AVAILABLE":
-      bgClass = "bg-emerald-50 text-emerald-700 border-emerald-150";
+      bgClass = "bg-emerald-50 text-emerald-700 border-emerald-100";
       dotClass = "bg-emerald-500";
       break;
     case "BOOKED":
-      bgClass = "bg-indigo-50 text-indigo-700 border-indigo-150";
-      dotClass = "bg-indigo-500";
+      bgClass = "bg-teal-50 text-teal-700 border-teal-100";
+      dotClass = "bg-teal-500";
       break;
     case "BLOCKED":
-      bgClass = "bg-amber-50 text-amber-700 border-amber-150";
+      bgClass = "bg-amber-50 text-amber-700 border-amber-100";
       dotClass = "bg-amber-500";
       break;
   }
@@ -68,7 +68,7 @@ interface LoadingStateProps {
 export const LoadingState: React.FC<LoadingStateProps> = ({ message = "Loading healthcare data...", id }) => {
   return (
     <div id={id} className="flex flex-col items-center justify-center p-12 text-center">
-      <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mb-3" />
+      <Loader2 className="w-8 h-8 text-teal-600 animate-spin mb-3" />
       <p className="text-sm font-medium text-slate-500">{message}</p>
     </div>
   );
@@ -93,14 +93,14 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   id,
 }) => {
   return (
-    <div id={id} className="flex flex-col items-center justify-center p-10 text-center border border-dashed border-slate-200 rounded-xl bg-slate-50/20 max-w-lg mx-auto my-6">
+    <div id={id} className="flex flex-col items-center justify-center p-10 text-center border border-dashed border-slate-200 rounded-2xl bg-slate-50/20 max-w-lg mx-auto my-6">
       <Info className="w-10 h-10 text-slate-300 mb-3" />
       <h3 className="text-sm font-semibold text-slate-800 mb-1">{title}</h3>
       <p className="text-xs text-slate-500 mb-4">{description}</p>
       {actionLabel && onAction && (
         <button
           onClick={onAction}
-          className="inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition rounded-lg"
+          className="inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 transition rounded-lg"
         >
           {actionLabel}
         </button>
@@ -134,17 +134,17 @@ export const ApiErrorAlert: React.FC<ApiErrorAlertProps> = ({ error, onDismiss, 
   }
 
   return (
-    <div id={id} className="flex items-start gap-3 p-4 bg-rose-50 border border-rose-100 rounded-lg text-rose-800 text-sm my-3 animate-fade-in">
+    <div id={id} role="alert" className="flex items-start gap-3 p-4 bg-rose-50 border border-rose-100 rounded-lg text-rose-800 text-sm my-3 animate-fade-in">
       <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
       <div className="flex-1">
-        <p className="font-semibold text-rose-900">Operation Failed</p>
+        <p className="font-semibold text-rose-900">Something needs your attention</p>
         <p className="text-rose-700 mt-0.5">{message}</p>
       </div>
       {onDismiss && (
         <button
           type="button"
           onClick={onDismiss}
-          className="text-rose-400 hover:text-rose-600 font-medium text-xs transition"
+          className="text-rose-700 hover:text-rose-800 font-medium text-xs transition"
         >
           Dismiss
         </button>
@@ -196,7 +196,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           <button
             onClick={onConfirm}
             className={`px-4 py-2 text-sm font-semibold text-white rounded-lg transition ${
-              isDestructive ? "bg-rose-600 hover:bg-rose-700" : "bg-indigo-600 hover:bg-indigo-700"
+              isDestructive ? "bg-rose-600 hover:bg-rose-700" : "bg-teal-600 hover:bg-teal-700"
             }`}
           >
             {confirmLabel}
@@ -215,6 +215,6 @@ export function getSpecColor(specialization: string): { bg: string; text: string
   if (s.includes("cardio")) return { bg: "bg-rose-50", text: "text-rose-600" };
   if (s.includes("pedia")) return { bg: "bg-sky-50", text: "text-sky-600" };
   if (s.includes("derma")) return { bg: "bg-emerald-50", text: "text-emerald-600" };
-  if (s.includes("neuro")) return { bg: "bg-indigo-50", text: "text-indigo-600" };
+  if (s.includes("neuro")) return { bg: "bg-teal-50", text: "text-teal-600" };
   return { bg: "bg-slate-50", text: "text-slate-600" };
 }

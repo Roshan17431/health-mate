@@ -3,12 +3,26 @@ package com.example.health.mate.exception;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RestControllerAdvice
 public class RestExceptionHandler {
+
+    @ExceptionHandler(OtpRateLimitException.class)
+    public ResponseEntity<Map<String, Object>> handleOtpRateLimit(OtpRateLimitException ex) {
+        return ResponseEntity.status(429).header("Retry-After", Long.toString(ex.getRetryAfterSeconds()))
+                .body(Map.of("statusCode", 429, "message", ex.getMessage()));
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
+        String message = ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getDefaultMessage()).findFirst().orElse("Please check your input.");
+        return ResponseEntity.badRequest().body(Map.of("statusCode", 400, "message", message));
+    }
 
     // Custom application exceptions
     @ExceptionHandler(OurException.class)

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useId } from "react";
 import { List, Calendar, Clock, RotateCcw, ShieldCheck, UserCheck, Check, Ban, Plus, Trash2, Tag, Stethoscope } from "lucide-react";
 import {
   fetchDoctors,
@@ -25,6 +25,7 @@ interface DashboardDoctorProps {
 }
 
 export const DashboardDoctor: React.FC<DashboardDoctorProps> = ({ user }) => {
+  const fieldIdPrefix = `doctor-${useId()}`;
   const [doctor, setDoctor] = useState<DoctorDTO | null>(null);
   const [appointments, setAppointments] = useState<AppointmentDTO[]>([]);
   const [patients, setPatients] = useState<PatientDTO[]>([]);
@@ -170,7 +171,7 @@ export const DashboardDoctor: React.FC<DashboardDoctorProps> = ({ user }) => {
   };
 
   if (loading) {
-    return <LoadingState message="Connecting Diagnostics Database..." />;
+    return <LoadingState message="Loading your practice workspace…" />;
   }
 
   return (
@@ -179,31 +180,31 @@ export const DashboardDoctor: React.FC<DashboardDoctorProps> = ({ user }) => {
       <ApiErrorAlert error={error} onDismiss={() => setError(null)} />
 
       {/* DOCTOR PROFILE JUMBOTRON */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fade-in">
+      <div className="dashboard-card dashboard-welcome bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fade-in">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+          <div className="w-12 h-12 rounded-xl bg-teal-50 flex items-center justify-center text-teal-600">
             <Stethoscope className="w-6 h-6" />
           </div>
           <div>
-            <span className="text-[10px] font-bold tracking-wider text-blue-600 bg-blue-50 px-2.5 py-1 rounded">
-              PRACTITIONER PORTAL
+            <span className="text-xs font-semibold tracking-wider text-teal-600 bg-teal-50 px-2.5 py-1 rounded">
+              YOUR PRACTICE, AT A GLANCE
             </span>
-            <h1 className="text-xl font-bold text-slate-900 mt-1">Dr. {doctor?.name}</h1>
-            <p className="text-xs text-slate-500 font-medium">
+            <h1 className="dashboard-title text-xl font-semibold text-slate-900 mt-1">Dr. {doctor?.name}</h1>
+            <p className="text-sm text-slate-500 font-medium">
               Specialization: {doctor?.specialization} | Experience: {doctor?.experience} Years | Dr. ID: #{doctor?.id}
             </p>
           </div>
         </div>
         <div className="flex gap-4 border-t pt-4 md:border-t-0 md:pt-0">
           <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-lg text-center min-w-[100px]">
-            <span className="text-xs font-semibold text-slate-500 block">Open Slots</span>
-            <span className="text-xl font-bold text-emerald-600">
+            <span className="text-sm font-semibold text-slate-500 block">Open Slots</span>
+            <span className="text-xl font-semibold text-emerald-600">
               {existingSlots.filter((ts) => ts.status === "AVAILABLE").length}
             </span>
           </div>
           <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-lg text-center min-w-[100px]">
-            <span className="text-xs font-semibold text-slate-500 block">Pending Reviews</span>
-            <span className="text-xl font-bold text-sky-600">
+            <span className="text-sm font-semibold text-slate-500 block">Pending Reviews</span>
+            <span className="text-xl font-semibold text-sky-600">
               {appointments.filter((a) => a.status === "SCHEDULED").length}
             </span>
           </div>
@@ -213,9 +214,9 @@ export const DashboardDoctor: React.FC<DashboardDoctorProps> = ({ user }) => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* LEFT COMPONENT: PENDING DIAGNOSTIC ASSIGNMENTS */}
         <div className="lg:col-span-8 space-y-6">
-          <div className="bg-white border border-slate-202 rounded-xl p-6 shadow-sm">
-            <h2 className="text-sm font-bold text-slate-900 border-b border-slate-150 pb-3 mb-4">
-              Assigned Patient Appointments
+          <div className="dashboard-card bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+            <h2 className="text-sm font-semibold text-slate-900 border-b border-slate-100 pb-3 mb-4">
+              Your appointments
             </h2>
 
             {appointments.length === 0 ? (
@@ -227,19 +228,19 @@ export const DashboardDoctor: React.FC<DashboardDoctorProps> = ({ user }) => {
                   return (
                     <div
                       key={app.id}
-                      className="p-4 border border-slate-150 hover:border-slate-200 transition rounded-xl bg-slate-50/10 flex flex-col md:flex-row justify-between gap-4"
+                      className="p-4 border border-slate-100 hover:border-slate-200 transition rounded-xl bg-slate-50/10 flex flex-col md:flex-row justify-between gap-4"
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs font-bold bg-slate-100 px-2 py-0.5 rounded text-slate-700">
+                          <span className="font-mono text-sm font-semibold bg-slate-100 px-2 py-0.5 rounded text-slate-700">
                             {app.appointmentCode}
                           </span>
                           <StatusBadge status={app.status} />
                         </div>
-                        <h4 className="font-bold text-slate-900 text-sm mt-1">
+                        <h4 className="font-semibold text-slate-900 text-sm mt-1">
                           {pat ? pat.name : `Registered Patient #${app.patientId}`}
                         </h4>
-                        <div className="flex items-center gap-3 text-slate-500 text-[11px] font-medium pt-1">
+                        <div className="flex items-center gap-3 text-slate-500 text-xs font-medium pt-1">
                           <span className="flex items-center gap-1">
                             <Calendar className="w-3.5 h-3.5 text-slate-400" />
                             {new Date(app.appointmentDateTime).toLocaleDateString()}
@@ -250,8 +251,8 @@ export const DashboardDoctor: React.FC<DashboardDoctorProps> = ({ user }) => {
                           </span>
                         </div>
                         {app.notes && (
-                          <div className="text-xs text-slate-600 bg-slate-50/80 p-2 border border-slate-100 rounded mt-2">
-                            <span className="font-semibold text-slate-500 block text-[10px] uppercase">
+                          <div className="text-sm text-slate-600 bg-slate-50/80 p-2 border border-slate-100 rounded mt-2">
+                            <span className="font-semibold text-slate-500 block text-xs uppercase">
                               Patient Consult Notes
                             </span>
                             &quot;{app.notes}&quot;
@@ -264,7 +265,7 @@ export const DashboardDoctor: React.FC<DashboardDoctorProps> = ({ user }) => {
                         {app.status === "SCHEDULED" && (
                           <button
                             onClick={() => handleUpdateStatus(app.id, "CONFIRMED")}
-                            className="w-full flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition rounded-lg shadow-sm"
+                            className="w-full flex items-center justify-center gap-1 px-3 py-1.5 text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 transition rounded-lg shadow-sm"
                           >
                             <UserCheck className="w-3.5 h-3.5" />
                             Confirm Booking
@@ -273,7 +274,7 @@ export const DashboardDoctor: React.FC<DashboardDoctorProps> = ({ user }) => {
                         {app.status === "CONFIRMED" && (
                           <button
                             onClick={() => handleUpdateStatus(app.id, "COMPLETED")}
-                            className="w-full flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition rounded-lg"
+                            className="w-full flex items-center justify-center gap-1 px-3 py-1.5 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition rounded-lg"
                           >
                             <ShieldCheck className="w-3.5 h-3.5" />
                             Complete Visit
@@ -282,7 +283,7 @@ export const DashboardDoctor: React.FC<DashboardDoctorProps> = ({ user }) => {
                         {(app.status === "SCHEDULED" || app.status === "CONFIRMED") && (
                           <button
                             onClick={() => handleUpdateStatus(app.id, "CANCELED")}
-                            className="w-full flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50 border border-rose-200 transition rounded-lg"
+                            className="w-full flex items-center justify-center gap-1 px-3 py-1.5 text-sm font-semibold text-rose-700 hover:bg-rose-50 border border-rose-200 transition rounded-lg"
                           >
                             <Ban className="w-3.5 h-3.5" />
                             Cancel Visit
@@ -300,28 +301,29 @@ export const DashboardDoctor: React.FC<DashboardDoctorProps> = ({ user }) => {
         {/* RIGHT COLUMN: RECURRING SCHEDULES & SLOTS ENGINE */}
         <div className="lg:col-span-4 space-y-6">
           {/* GENERATE CONCRETE DAILY SLOTS */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-            <h3 className="text-sm font-bold text-slate-900 border-b border-slate-150 pb-2.5 mb-3 flex items-center gap-1">
-              <Calendar className="w-4 h-4 text-blue-600" />
-              Slot Availability Engine
+          <div className="dashboard-card bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+            <h3 className="text-sm font-semibold text-slate-900 border-b border-slate-100 pb-2.5 mb-3 flex items-center gap-1">
+              <Calendar className="w-4 h-4 text-teal-600" />
+              Appointment times
             </h3>
 
             <div className="space-y-3">
               <div>
-                <label className="block text-[10px] uppercase font-bold text-slate-500 mb-1">Select Date</label>
+                <label htmlFor={`${fieldIdPrefix}-slot-date`} className="block text-xs uppercase font-semibold text-slate-500 mb-1">Select Date</label>
                 <input
+                  id={`${fieldIdPrefix}-slot-date`}
                   type="date"
                   value={selectedSlotDate}
                   onChange={(e) => setSelectedSlotDate(e.target.value)}
-                  className="w-full px-3 py-1.5 border border-slate-250 rounded-lg text-xs text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 bg-white"
+                  className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 bg-white"
                 />
               </div>
 
               {/* SLOTS LISTING */}
-              <div className="border border-slate-100 rounded-lg bg-slate-50/50 p-2 text-xs">
-                <span className="font-bold text-slate-700 block text-[10px] uppercase mb-1">Concrete Slots List</span>
+              <div className="border border-slate-100 rounded-lg bg-slate-50/50 p-2 text-sm">
+                <span className="font-semibold text-slate-700 block text-xs uppercase mb-1">Concrete Slots List</span>
                 {existingSlots.length === 0 ? (
-                  <p className="text-slate-400 py-2 text-center text-[11px]">No slots configured for this date.</p>
+                  <p className="text-slate-400 py-2 text-center text-xs">No slots configured for this date.</p>
                 ) : (
                   <div className="space-y-1.5 max-h-[140px] overflow-y-auto">
                     {existingSlots.map((ts) => (
@@ -329,15 +331,15 @@ export const DashboardDoctor: React.FC<DashboardDoctorProps> = ({ user }) => {
                         key={ts.id}
                         className="bg-white border border-slate-200 p-1.5 rounded flex items-center justify-between"
                       >
-                        <span className="font-mono text-[11px] font-semibold text-slate-600">
+                        <span className="font-mono text-xs font-semibold text-slate-600">
                           {ts.startTime.substring(0, 5)} - {ts.endTime.substring(0, 5)}
                         </span>
                         <div className="flex items-center gap-1.5">
                           <span
-                            className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
+                            className={`px-1.5 py-0.5 rounded text-xs font-semibold uppercase ${
                               ts.status === "AVAILABLE"
                                 ? "bg-emerald-50 text-emerald-700"
-                                : "bg-blue-50 text-blue-700"
+                                : "bg-teal-50 text-teal-700"
                             }`}
                           >
                             {ts.status}
@@ -358,57 +360,60 @@ export const DashboardDoctor: React.FC<DashboardDoctorProps> = ({ user }) => {
 
               {/* GENERATOR FORM */}
               <form onSubmit={handleCreateSlotObj} className="border-t border-slate-100 pt-3 space-y-2">
-                <span className="font-bold text-slate-700 block text-[10px] uppercase">Add Diagnostics Hour Block</span>
+                <span className="font-semibold text-slate-700 block text-xs uppercase">Add Diagnostics Hour Block</span>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[9px] font-semibold text-slate-500 mb-0.5">Start Time</label>
+                    <label htmlFor={`${fieldIdPrefix}-slot-start`} className="block text-xs font-semibold text-slate-500 mb-0.5">Start Time</label>
                     <input
+                      id={`${fieldIdPrefix}-slot-start`}
                       type="time"
                       value={newSlotStart}
                       onChange={(e) => setNewSlotStart(`${e.target.value}:00`)}
-                      className="w-full px-2 py-1 border border-slate-200 rounded text-xs focus:outline-none"
+                      className="w-full px-2 py-1 border border-slate-200 rounded text-sm focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] font-semibold text-slate-500 mb-0.5">End Time</label>
+                    <label htmlFor={`${fieldIdPrefix}-slot-end`} className="block text-xs font-semibold text-slate-500 mb-0.5">End Time</label>
                     <input
+                      id={`${fieldIdPrefix}-slot-end`}
                       type="time"
                       value={newSlotEnd}
                       onChange={(e) => setNewSlotEnd(`${e.target.value}:00`)}
-                      className="w-full px-2 py-1 border border-slate-200 rounded text-xs focus:outline-none"
+                      className="w-full px-2 py-1 border border-slate-200 rounded text-sm focus:outline-none"
                     />
                   </div>
                 </div>
                 <button
                   type="submit"
-                  className="w-full flex items-center justify-center gap-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-semibold cursor-pointer transition"
+                  className="w-full flex items-center justify-center gap-1 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded text-sm font-semibold cursor-pointer transition"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  Generate Slot
+                  Add time slot
                 </button>
               </form>
             </div>
           </div>
 
           {/* RECURRING CALENDAR HOURS */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-            <h3 className="text-sm font-bold text-slate-900 border-b border-slate-150 pb-2.5 mb-3 flex items-center gap-1">
-              <Clock className="w-4 h-4 text-blue-600" />
-              Recurring Timetable Week
+          <div className="dashboard-card bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+            <h3 className="text-sm font-semibold text-slate-900 border-b border-slate-100 pb-2.5 mb-3 flex items-center gap-1">
+              <Clock className="w-4 h-4 text-teal-600" />
+              Weekly availability
             </h3>
 
             <div className="space-y-3">
               <div className="space-y-1.5">
                 {schedules.map((sch) => (
-                  <div key={sch.id} className="bg-slate-50 p-2 rounded-lg border border-slate-100 flex items-center justify-between text-xs">
+                  <div key={sch.id} className="bg-slate-50 p-2 rounded-lg border border-slate-100 flex items-center justify-between text-sm">
                     <div>
-                      <span className="font-bold text-slate-700 text-[10px] uppercase block">{sch.dayOfWeek}</span>
-                      <span className="font-mono text-[11px] text-slate-500">
+                      <span className="font-semibold text-slate-700 text-xs uppercase block">{sch.dayOfWeek}</span>
+                      <span className="font-mono text-xs text-slate-500">
                         {sch.startTime.substring(0, 5)} - {sch.endTime.substring(0, 5)}
                       </span>
                     </div>
                     <button
                       onClick={() => handleDeleteSchedule(sch.id)}
+                      aria-label={`Delete ${sch.dayOfWeek.toLowerCase()} availability`}
                       className="text-slate-400 hover:text-rose-600 cursor-pointer transition"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -419,13 +424,14 @@ export const DashboardDoctor: React.FC<DashboardDoctorProps> = ({ user }) => {
 
               {/* TIMETABLE ADD FORM */}
               <form onSubmit={handleCreateSchedule} className="border-t border-slate-100 pt-3 space-y-2">
-                <span className="font-bold text-slate-700 block text-[10px] uppercase">Add Recurring Availability</span>
+                <span className="font-semibold text-slate-700 block text-xs uppercase">Add Recurring Availability</span>
                 <div>
-                  <label className="block text-[9px] font-semibold text-slate-500 mb-0.5">Day of Week</label>
+                  <label htmlFor={`${fieldIdPrefix}-schedule-day`} className="block text-xs font-semibold text-slate-500 mb-0.5">Day of Week</label>
                   <select
+                    id={`${fieldIdPrefix}-schedule-day`}
                     value={schedDay}
                     onChange={(e) => setSchedDay(e.target.value as DayOfWeek)}
-                    className="w-full px-2 py-1 border border-slate-200 rounded text-xs focus:outline-none bg-white"
+                    className="w-full px-2 py-1 border border-slate-200 rounded text-sm focus:outline-none bg-white"
                   >
                     <option value="MONDAY">MONDAY</option>
                     <option value="TUESDAY">TUESDAY</option>
@@ -438,30 +444,32 @@ export const DashboardDoctor: React.FC<DashboardDoctorProps> = ({ user }) => {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[9px] font-semibold text-slate-500 mb-0.5">Start Time</label>
+                    <label htmlFor={`${fieldIdPrefix}-schedule-start`} className="block text-xs font-semibold text-slate-500 mb-0.5">Start Time</label>
                     <input
+                      id={`${fieldIdPrefix}-schedule-start`}
                       type="time"
                       value={schedStart.substring(0, 5)}
                       onChange={(e) => setSchedStart(`${e.target.value}:00`)}
-                      className="w-full px-2 py-1 border border-slate-200 rounded text-xs focus:outline-none"
+                      className="w-full px-2 py-1 border border-slate-200 rounded text-sm focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] font-semibold text-slate-500 mb-0.5">End Time</label>
+                    <label htmlFor={`${fieldIdPrefix}-schedule-end`} className="block text-xs font-semibold text-slate-500 mb-0.5">End Time</label>
                     <input
+                      id={`${fieldIdPrefix}-schedule-end`}
                       type="time"
                       value={schedEnd.substring(0, 5)}
                       onChange={(e) => setSchedEnd(`${e.target.value}:00`)}
-                      className="w-full px-2 py-1 border border-slate-200 rounded text-xs focus:outline-none"
+                      className="w-full px-2 py-1 border border-slate-200 rounded text-sm focus:outline-none"
                     />
                   </div>
                 </div>
                 <button
                   type="submit"
-                  className="w-full flex items-center justify-center gap-1 py-1.5 bg-slate-800 hover:bg-slate-950 text-white rounded text-xs font-semibold cursor-pointer transition"
+                  className="w-full flex items-center justify-center gap-1 py-1.5 bg-slate-800 hover:bg-slate-950 text-white rounded text-sm font-semibold cursor-pointer transition"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  Save timetables
+                  Save availability
                 </button>
               </form>
             </div>

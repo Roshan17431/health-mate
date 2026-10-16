@@ -200,6 +200,13 @@ export interface OtpTokenDTO {
   expiresAt?: string;
   isUsed: boolean;
   usedAt?: string;
+  resetToken?: string;
+}
+
+export interface PasswordResetRequestDTO {
+  resetToken: string;
+  newPassword: string;
+  confirmPassword: string;
 }
 
 export interface ApiError {

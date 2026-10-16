@@ -17,6 +17,7 @@ import {
   OtpTokenDTO,
   OtpVerificationRequestDTO,
   PageResponse,
+  PasswordResetRequestDTO,
   PatientDTO,
   PatientRequestDTO,
   RegisterRequestDTO,
@@ -409,6 +410,13 @@ export async function sendOtp(dto: SendOtpRequestDTO): Promise<OtpTokenDTO> {
 
 export async function verifyOtp(dto: OtpVerificationRequestDTO): Promise<OtpTokenDTO> {
   return request<OtpTokenDTO>("/api/otp/verify", {
+    method: "POST",
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function resetPassword(dto: PasswordResetRequestDTO): Promise<{ message: string }> {
+  return request<{ message: string }>("/api/auth/password-reset", {
     method: "POST",
     body: JSON.stringify(dto),
   });

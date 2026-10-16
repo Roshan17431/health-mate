@@ -4,8 +4,9 @@
  */
 
 import React, { useState } from "react";
-import { Lock, Mail, Phone, Calendar, User, MapPin, KeyRound, Check, FileText, HeartPulse, ShieldCheck, Activity } from "lucide-react";
-import { loginUser, registerUser, sendOtp, verifyOtp } from "../api/client";
+import { Lock, Mail, Phone, Calendar, User, MapPin, Check, HeartPulse, Stethoscope, ArrowRight, ArrowLeft } from "lucide-react";
+import { Brand } from "./Brand";
+import { loginUser, registerUser, sendOtp, verifyOtp, resetPassword } from "../api/client";
 import { RegisterRequestDTO, Gender, UserRole, OtpPurpose } from "../types";
 import { ApiErrorAlert } from "./CommonUI";
 
@@ -43,6 +44,19 @@ export const AuthScreens: React.FC<AuthScreensProps> = ({ onAuthSuccess, initial
   const [otpPurpose, setOtpPurpose] = useState<OtpPurpose>("PASSWORD_RESET");
   const [otpCode, setOtpCode] = useState("");
   const [otpSent, setOtpSent] = useState(false);
+  const [resetToken, setResetToken] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const leaveOtpView = () => {
+    setIsOtpView(false);
+    setOtpSent(false);
+    setOtpCode("");
+    setResetToken("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setError(null);
+  };
 
   // Handles Login
   const handleLoginSubmit = async (e: React.FormEvent) => {
@@ -129,19 +143,52 @@ export const AuthScreens: React.FC<AuthScreensProps> = ({ onAuthSuccess, initial
     setError(null);
     setLoading(true);
     try {
-      await verifyOtp({
+      const verified = await verifyOtp({
         email: otpEmail,
         otpCode: otpCode,
         purpose: otpPurpose,
       });
 
-      setFeedbackMsg("Verification success.");
-      // Auto-populate & switch to password entry
+      if (otpPurpose === "PASSWORD_RESET") {
+        if (!verified.resetToken) {
+          throw new Error("Password reset could not be authorized. Request a new code.");
+        }
+        setResetToken(verified.resetToken);
+        setOtpCode("");
+        setFeedbackMsg("Code verified. Choose your new password.");
+        return;
+      }
+      setFeedbackMsg("Verification successful. You can sign in to your account.");
       setLoginEmail(otpEmail);
       setLoginPassword("");
-      setIsOtpView(false);
+      leaveOtpView();
       setIsRegister(false);
-      setError(null);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (newPassword.length < 8 || new TextEncoder().encode(newPassword).length > 72) {
+      setError("Use at least 8 characters and no more than 72 bytes for your password.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const result = await resetPassword({ resetToken, newPassword, confirmPassword });
+      setLoginEmail(otpEmail);
+      setLoginPassword("");
+      leaveOtpView();
+      setIsRegister(false);
+      setFeedbackMsg(result.message);
     } catch (err) {
       setError(err);
     } finally {
@@ -150,530 +197,169 @@ export const AuthScreens: React.FC<AuthScreensProps> = ({ onAuthSuccess, initial
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-between">
-      {/* Top compact info strip in brand colors */}
-      <div className="bg-blue-600 px-4 py-2 text-center text-xs font-bold text-white tracking-widest uppercase shadow-xs">
-        ⚡ 2026 HIPAA-Compliant Secured Clinical Instance Active
-      </div>
+    <div className="auth-page">
+      <header className="auth-header">
+        <Brand />
+        <p className="auth-header-note"><span aria-hidden="true" /> A little more connected. A little more cared for.</p>
+      </header>
 
-      <div className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col lg:flex-row items-stretch justify-center gap-8 lg:gap-12">
-        
-        {/* INTERACTIVE COMPANION INFO PANEL (Left on desktop, top on mobile) */}
-        <div className="flex-1 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 flex flex-col justify-between space-y-6">
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-50 text-blue-600 shadow-sm">
-                <HeartPulse className="w-5 h-5 animate-pulse" />
-              </span>
-              <div>
-                <h3 className="text-xs font-black text-slate-800 tracking-wider">HEALTH MATE EHR</h3>
-                <p className="text-[9px] font-mono font-bold text-slate-400 uppercase">Interactive Operations Center</p>
-              </div>
+      <main className="auth-layout">
+        <section className="auth-story" aria-label="About Health Mate">
+          <p className="eyebrow">A healthier kind of connection</p>
+          <h2>Good care.<br />Less hassle.<br /><em>More you.</em></h2>
+          <p className="auth-story-intro">A simpler way to manage appointments, connect with your care team, and make room for what matters.</p>
+
+          <div className="care-art" aria-hidden="true">
+            <div className="care-orbit"><div className="care-symbol"><HeartPulse strokeWidth={1.5} /></div></div>
+            <div className="care-note care-note-one">
+              <span className="care-note-icon"><Calendar size={19} /></span>
+              <div><strong>Care on your schedule</strong><small>Find a time that works for you</small></div>
             </div>
-
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-8 sm:leading-9">
-              Your Clinical Workflow, <span className="text-blue-600">Unified & Secure</span>
-            </h1>
-            <p className="text-xs text-slate-500 mt-2 font-medium leading-relaxed">
-              Welcome to the Health Mate EHR Operations Gateway. Unified scheduling, practitioner slot generation, and real-time medical logs tailored for modern clinical precision.
-            </p>
-
-            {/* Portal functions highlights with elegant layouts */}
-            <div className="mt-8 space-y-3">
-              <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Portal Functions & Solutions</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-start gap-2.5">
-                  <span className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 mt-0.5 font-mono text-[9px] font-bold">01</span>
-                  <div>
-                    <h5 className="text-[11px] font-bold text-slate-800 uppercase">Consult Scheduling</h5>
-                    <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">Patients easily filter slot availability by medical specialty and schedule instant visits.</p>
-                  </div>
-                </div>
-
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-start gap-2.5">
-                  <span className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 mt-0.5 font-mono text-[9px] font-bold">02</span>
-                  <div>
-                    <h5 className="text-[11px] font-bold text-slate-800 uppercase">Active Slots Engine</h5>
-                    <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">Doctors generate concrete, date-specific diagnostic tables to accept bookings.</p>
-                  </div>
-                </div>
-
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-start gap-2.5">
-                  <span className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 mt-0.5 font-mono text-[9px] font-bold">03</span>
-                  <div>
-                    <h5 className="text-[11px] font-bold text-slate-800 uppercase">HIPAA Diagnosis Logs</h5>
-                    <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">Authorized medical professionals log and finalize medication prescription summaries.</p>
-                  </div>
-                </div>
-
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-start gap-2.5">
-                  <span className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 mt-0.5 font-mono text-[9px] font-bold">04</span>
-                  <div>
-                    <h5 className="text-[11px] font-bold text-slate-800 uppercase">Traceable Auditing</h5>
-                    <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">Administrators inspect activity logs, user registries, and medical status profiles.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* INTERACTIVE TOUR COMPONENT: Explore Operator Workflows */}
-            <div className="mt-8 p-4 bg-blue-50/60 rounded-xl border border-blue-100">
-              <div className="flex items-center justify-between mb-3.5">
-                <span className="text-[11px] font-bold text-blue-900 uppercase tracking-widest flex items-center gap-1.5">
-                  <Activity className="w-3.5 h-3.5 text-blue-600" />
-                  Interactive Role Capabilities
-                </span>
-                <span className="text-[8px] bg-blue-600 text-white font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  Backend API
-                </span>
-              </div>
-
-              {/* Selector Tabs */}
-              <div className="grid grid-cols-3 gap-1.5 p-1 bg-white rounded-lg border border-slate-200 mb-3">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("patient")}
-                  className={`py-1.5 rounded text-[10px] font-bold transition-all text-center cursor-pointer ${
-                    activeTab === "patient" ? "bg-blue-600 text-white shadow-xs" : "text-slate-600 hover:text-slate-800 hover:bg-slate-50"
-                  }`}
-                >
-                  🧑‍🦽 Patient
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("doctor")}
-                  className={`py-1.5 rounded text-[10px] font-bold transition-all text-center cursor-pointer ${
-                    activeTab === "doctor" ? "bg-blue-600 text-white shadow-xs" : "text-slate-600 hover:text-slate-800 hover:bg-slate-50"
-                  }`}
-                >
-                  🥼 Practitioner
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("admin")}
-                  className={`py-1.5 rounded text-[10px] font-bold transition-all text-center cursor-pointer ${
-                    activeTab === "admin" ? "bg-blue-600 text-white shadow-xs" : "text-slate-600 hover:text-slate-800 hover:bg-slate-50"
-                  }`}
-                >
-                  💼 Admin
-                </button>
-              </div>
-
-              {/* Dynamic Tour Details Output */}
-              <div className="text-xs text-slate-600 min-h-[58px] transition-all duration-205">
-                {activeTab === "patient" && (
-                  <p className="animate-fade-in text-[11px] leading-relaxed">
-                    <strong className="text-slate-800">Patient Dashboard</strong>: Schedule immediate practitioner visits, input medical query logs, self-register profile records, and view approved consult diagnosis reports.
-                  </p>
-                )}
-                {activeTab === "doctor" && (
-                  <p className="animate-fade-in text-[11px] leading-relaxed">
-                    <strong className="text-slate-800">Doctor Workspace</strong>: Define flexible appointment time slots, review patient consult symptom charts, write real-time treatments or prescriptions, and organize patient lists.
-                  </p>
-                )}
-                {activeTab === "admin" && (
-                  <p className="animate-fade-in text-[11px] leading-relaxed">
-                    <strong className="text-slate-800">System Admin Control</strong>: Unrestricted tracking of clinic usage metric charts, HIPAA compliance security checklists, operator profile directories, and diagnostic status monitors.
-                  </p>
-                )}
-              </div>
+            <div className="care-note care-note-two">
+              <span className="care-note-icon"><Stethoscope size={19} /></span>
+              <div><strong>Your care team, closer</strong><small>One place to stay connected</small></div>
             </div>
           </div>
 
-          {/* Unsplash Consultation Image */}
-          <div className="relative rounded-xl overflow-hidden border border-slate-200 shadow-xs h-36 hidden md:block select-none pointer-events-none shrink-0 border-slate-200">
-            <img
-              src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=80"
-              alt="Medical Consultation Display Setup"
-              referrerPolicy="no-referrer"
-              className="w-full h-full object-cover grayscale-20 hover:grayscale-0 transition-all duration-500"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-900/40 to-transparent flex items-end p-3">
-              <span className="text-[10px] font-mono tracking-wide font-black text-white bg-blue-600/90 px-2 py-0.5 rounded shadow-xs uppercase">
-                Digital Primary Care Workflow Illustrated
-              </span>
+          <div className="story-portals">
+            <div className="portal-tabs" aria-label="Explore Health Mate for your role">
+              <button type="button" aria-pressed={activeTab === "patient"} onClick={() => setActiveTab("patient")}>For patients</button>
+              <button type="button" aria-pressed={activeTab === "doctor"} onClick={() => setActiveTab("doctor")}>For doctors</button>
+              <button type="button" aria-pressed={activeTab === "admin"} onClick={() => setActiveTab("admin")}>For clinics</button>
             </div>
-          </div>
-
-          {/* Secure guidelines */}
-          <div className="flex items-center gap-2 border-t border-slate-100 pt-4 text-[10px] text-slate-400">
-            <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
-            <p className="font-semibold leading-relaxed">
-              Standard secure credentials validation. All database records are persistent, encrypted, and isolated to ensure absolute clinical isolation.
+            <p className="portal-description" aria-live="polite">
+              {activeTab === "patient" && "Find your doctor, choose an appointment, and keep track of your visits. Your next step toward feeling better starts here."}
+              {activeTab === "doctor" && "Make space for better care. Manage your availability, review appointments, and keep your day in focus."}
+              {activeTab === "admin" && "Keep your clinic connected. Manage your team, patient records, appointments, and notifications in one place."}
             </p>
           </div>
-        </div>
+        </section>
 
-        {/* AUTHENTICATION FORM WRAPPER PANEL (Right side) */}
-        <div className="w-full lg:max-w-md shrink-0 flex flex-col justify-center">
-          <div className="bg-white py-8 px-4 shadow-sm border border-slate-200 sm:rounded-xl sm:px-10">
-          <ApiErrorAlert error={error} onDismiss={() => setError(null)} />
+        <section className="auth-form-panel" aria-labelledby="auth-title">
+          <div className={`auth-form-content ${isRegister && !isOtpView ? "is-register" : ""}`}>
+            <ApiErrorAlert error={error} onDismiss={() => setError(null)} />
+            {feedbackMsg && <div className="auth-feedback" role="status"><Check size={18} className="shrink-0" /><p>{feedbackMsg}</p></div>}
 
-          {feedbackMsg && (
-            <div className="mb-4 p-3.5 bg-emerald-50 border border-emerald-100 rounded-lg text-emerald-800 text-xs flex gap-2">
-              <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-              <p className="font-semibold">{feedbackMsg}</p>
-            </div>
-          )}
-
-          {/* OTP FORM SCREEN */}
-          {isOtpView ? (
-            <div>
-              <div className="flex items-center justify-between border-b border-slate-150 pb-3 mb-6">
-                <span className="text-sm font-bold text-slate-800 font-sans">OTP Verification Workflow</span>
-                <button
-                  onClick={() => {
-                    setIsOtpView(false);
-                    setError(null);
-                    setFeedbackMsg("");
-                  }}
-                  className="text-xs text-blue-600 font-semibold hover:underline"
-                >
-                  Return to Sign In
-                </button>
-              </div>
-
-              {!otpSent ? (
-                <form onSubmit={handleSendOtp} className="space-y-4">
-                  <p className="text-xs text-slate-500">
-                    Initiate security code generation to confirm account ownership.
-                  </p>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                      Email Address
-                    </label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-                      <input
-                        type="email"
-                        required
-                        placeholder="john.doe@hospital.com"
-                        value={otpEmail}
-                        onChange={(e) => setOtpEmail(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 border border-slate-205 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                      />
+            {isOtpView ? (
+              <>
+                <button type="button" className="auth-back" disabled={loading} onClick={() => { leaveOtpView(); setFeedbackMsg(""); }}><ArrowLeft size={15} /> Back to sign in</button>
+                <div className="auth-heading">
+                  <p className="eyebrow">A little help getting back</p>
+                  <h1 id="auth-title">{resetToken ? "Choose a new password" : otpSent ? "Check your code" : "Verify your account"}</h1>
+                  <p>{resetToken ? "Use at least 8 characters. This verification lasts up to 5 minutes." : otpSent ? "Enter your 6-character verification code to continue." : "Request a verification code for your account."}</p>
+                </div>
+                {resetToken ? (
+                  <form className="auth-form" onSubmit={handleResetPassword}>
+                    <input type="email" name="username" autoComplete="username" value={otpEmail} readOnly hidden aria-label="Email address" />
+                    <div className="auth-field">
+                      <label htmlFor="reset-password">New password</label>
+                      <div className="field-with-icon"><Lock aria-hidden="true" /><input id="reset-password" className="auth-input" type="password" autoComplete="new-password" required minLength={8} maxLength={72} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} /></div>
                     </div>
+                    <div className="auth-field">
+                      <label htmlFor="reset-password-confirm">Confirm new password</label>
+                      <div className="field-with-icon"><Lock aria-hidden="true" /><input id="reset-password-confirm" className="auth-input" type="password" autoComplete="new-password" required minLength={8} maxLength={72} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} /></div>
+                    </div>
+                    <button type="submit" className="primary-button" disabled={loading}>{loading ? "Updating password…" : "Update password"}<ArrowRight aria-hidden="true" /></button>
+                    <button type="button" className="secondary-button" disabled={loading} onClick={() => { setResetToken(""); setNewPassword(""); setConfirmPassword(""); setOtpSent(false); setFeedbackMsg(""); setError(null); }}>Request a new code</button>
+                  </form>
+                ) : !otpSent ? (
+                  <form className="auth-form" onSubmit={handleSendOtp}>
+                    <div className="auth-field">
+                      <label htmlFor="otp-email">Email address</label>
+                      <div className="field-with-icon"><Mail aria-hidden="true" /><input id="otp-email" className="auth-input" type="email" autoComplete="email" required placeholder="you@example.com" value={otpEmail} onChange={(e) => setOtpEmail(e.target.value)} /></div>
+                    </div>
+                    <div className="auth-field">
+                      <label htmlFor="otp-purpose">What do you need help with?</label>
+                      <select id="otp-purpose" className="auth-input" value={otpPurpose} onChange={(e) => setOtpPurpose(e.target.value as OtpPurpose)}>
+                        <option value="PASSWORD_RESET">Reset password</option>
+                        <option value="PASSWORD_CHANGE">Change password</option>
+                      </select>
+                    </div>
+                    <button type="submit" className="primary-button" disabled={loading}>{loading ? "Requesting code…" : "Send verification code"}<ArrowRight aria-hidden="true" /></button>
+                  </form>
+                ) : (
+                  <form className="auth-form" onSubmit={handleVerifyOtpSubmit}>
+                    <div className="auth-field">
+                      <label htmlFor="otp-code">Verification code</label>
+                      <div className="field-with-icon"><Lock aria-hidden="true" /><input id="otp-code" className="auth-input tracking-widest font-mono" type="text" autoComplete="one-time-code" required maxLength={6} placeholder="Enter 6-character code" value={otpCode} onChange={(e) => setOtpCode(e.target.value)} /></div>
+                    </div>
+                    <button type="submit" className="primary-button" disabled={loading}>{loading ? "Verifying…" : "Verify code"}<ArrowRight aria-hidden="true" /></button>
+                    <button type="button" className="secondary-button" disabled={loading} onClick={() => { setOtpSent(false); setOtpCode(""); setFeedbackMsg(""); }}>Use a different email</button>
+                  </form>
+                )}
+              </>
+            ) : !isRegister ? (
+              <>
+                <div className="auth-heading">
+                  <p className="eyebrow">Your health, all together</p>
+                  <h1 id="auth-title">Welcome back.</h1>
+                  <p>A familiar place for your next step in care.<br />Sign in to your Health Mate account.</p>
+                </div>
+                <form className="auth-form" onSubmit={handleLoginSubmit}>
+                  <div className="auth-field">
+                    <label htmlFor="login-email">Email address</label>
+                    <div className="field-with-icon"><Mail aria-hidden="true" /><input id="login-email" className="auth-input" type="email" autoComplete="username" required placeholder="you@example.com" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} /></div>
                   </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                      Verification Purpose
-                    </label>
-                    <select
-                      value={otpPurpose}
-                      onChange={(e) => setOtpPurpose(e.target.value as OtpPurpose)}
-                      className="w-full px-3 py-2 border border-slate-205 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 bg-white"
-                    >
-                      <option value="PASSWORD_RESET">PASSWORD_RESET</option>
-                      <option value="PASSWORD_CHANGE">PASSWORD_CHANGE</option>
-                    </select>
+                  <div className="auth-field">
+                    <div className="password-label"><label htmlFor="login-password">Password</label><button type="button" className="text-link" onClick={() => { setIsOtpView(true); setOtpPurpose("PASSWORD_RESET"); setOtpSent(false); setOtpEmail(loginEmail); setResetToken(""); setError(null); setFeedbackMsg(""); }}>Forgot password?</button></div>
+                    <div className="field-with-icon"><Lock aria-hidden="true" /><input id="login-password" className="auth-input" type="password" autoComplete="current-password" required placeholder="Enter your password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} /></div>
                   </div>
-
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full mt-2 flex justify-center py-2.5 px-4 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition rounded-lg disabled:bg-slate-300 shadow-sm"
-                  >
-                    {loading ? "Issuing Request..." : "Send Verification OTP"}
-                  </button>
+                  <button type="submit" className="primary-button" disabled={loading}>{loading ? "Signing you in…" : "Sign in"}<ArrowRight aria-hidden="true" /></button>
                 </form>
-              ) : (
-                <form onSubmit={handleVerifyOtpSubmit} className="space-y-4">
-                  <p className="text-xs text-slate-500">
-                    A 6-digit secret code has been dispatched. Enter it below to complete authorization.
-                  </p>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                      OTP Verification Code
-                    </label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-                      <input
-                        type="text"
-                        required
-                        maxLength={6}
-                        placeholder="123456"
-                        value={otpCode}
-                        onChange={(e) => setOtpCode(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 border border-slate-205 rounded-lg text-sm text-slate-800 tracking-widest font-mono font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                      />
+                <p className="auth-switch">New to Health Mate?<button type="button" className="text-link" onClick={() => { setIsRegister(true); setError(null); setFeedbackMsg(""); }}>Create an account</button></p>
+                <p className="auth-form-note"><Lock size={13} aria-hidden="true" /> Your care starts with your own account.</p>
+              </>
+            ) : (
+              <>
+                <div className="auth-heading">
+                  <p className="eyebrow">A fresh start</p>
+                  <h1 id="auth-title">Let's get you connected.</h1>
+                  <p>Create your Health Mate account. All fields are required.</p>
+                </div>
+                <form className="auth-form" onSubmit={handleRegisterSubmit}>
+                  <div className="registration-grid">
+                    <div className="auth-field">
+                      <label htmlFor="reg-name">Full name</label>
+                      <div className="field-with-icon"><User aria-hidden="true" /><input id="reg-name" className="auth-input" required type="text" autoComplete="name" placeholder="Your full name" value={regName} onChange={(e) => setRegName(e.target.value)} /></div>
+                    </div>
+                    <div className="auth-field">
+                      <label htmlFor="reg-email">Email address</label>
+                      <div className="field-with-icon"><Mail aria-hidden="true" /><input id="reg-email" className="auth-input" required type="email" autoComplete="email" placeholder="you@example.com" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} /></div>
+                    </div>
+                    <div className="auth-field">
+                      <label htmlFor="reg-password">Password</label>
+                      <div className="field-with-icon"><Lock aria-hidden="true" /><input id="reg-password" className="auth-input" required type="password" autoComplete="new-password" minLength={8} placeholder="At least 8 characters" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} /></div>
+                    </div>
+                    <div className="auth-field">
+                      <label htmlFor="reg-phone">Phone number</label>
+                      <div className="field-with-icon"><Phone aria-hidden="true" /><input id="reg-phone" className="auth-input" required type="tel" autoComplete="tel" placeholder="Your phone number" value={regPhone} onChange={(e) => setRegPhone(e.target.value)} /></div>
+                    </div>
+                    <div className="auth-field">
+                      <label htmlFor="reg-role">Account type</label>
+                      <select id="reg-role" className="auth-input" value={regRole} onChange={(e) => setRegRole(e.target.value as UserRole)}><option value="ROLE_PATIENT">Patient</option><option value="ROLE_DOCTOR">Doctor</option><option value="ROLE_ADMIN">Administrator</option></select>
+                    </div>
+                    <div className="auth-field">
+                      <label htmlFor="reg-gender">Gender</label>
+                      <select id="reg-gender" className="auth-input" value={regGender} onChange={(e) => setRegGender(e.target.value as Gender)}><option value="FEMALE">Female</option><option value="MALE">Male</option><option value="OTHER">Other / Non-binary</option></select>
+                    </div>
+                    <div className="auth-field">
+                      <label htmlFor="reg-dob">Date of birth</label>
+                      <div className="field-with-icon"><Calendar aria-hidden="true" /><input id="reg-dob" className="auth-input" required type="date" autoComplete="bday" value={regDob} onChange={(e) => setRegDob(e.target.value)} /></div>
+                    </div>
+                    <div className="auth-field">
+                      <label htmlFor="reg-address">Address</label>
+                      <div className="field-with-icon"><MapPin aria-hidden="true" /><input id="reg-address" className="auth-input" required type="text" autoComplete="street-address" placeholder="Street, city, apartment" value={regAddress} onChange={(e) => setRegAddress(e.target.value)} /></div>
                     </div>
                   </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setOtpSent(false)}
-                      className="w-1/3 py-2.5 text-sm font-semibold border border-slate-200 hover:bg-slate-50 transition rounded-lg text-slate-600"
-                    >
-                      Back
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-2/3 py-2.5 px-4 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition rounded-lg disabled:bg-slate-300 shadow-sm"
-                    >
-                      {loading ? "Authenticating..." : "Verify OTP Code"}
-                    </button>
-                  </div>
+                  <button type="submit" className="primary-button" disabled={loading}>{loading ? "Creating your account…" : "Create account"}<ArrowRight aria-hidden="true" /></button>
                 </form>
-              )}
-            </div>
-          ) : !isRegister ? (
-            /* SIGN IN SCREEN */
-            <div>
-              <div className="text-center mb-6">
-                <p className="text-slate-600 text-sm">Please log in to manage schedules, patients, or dashboards.</p>
-              </div>
-
-              <form onSubmit={handleLoginSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Email address
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-                    <input
-                      type="email"
-                      required
-                      placeholder="enter your security email"
-                      value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Password
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsOtpView(true);
-                        setOtpSent(false);
-                        setOtpEmail(loginEmail);
-                      }}
-                      className="text-xs font-bold text-blue-600 hover:underline"
-                    >
-                      Forgot password?
-                    </button>
-                  </div>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-                    <input
-                      type="password"
-                      required
-                      placeholder="••••••••"
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                    />
-                  </div>
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full cursor-pointer flex justify-center py-2.5 px-4 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition rounded-lg shadow-md"
-                  >
-                    {loading ? "Authenticating Session..." : "Sign In Gateway"}
-                  </button>
-                </div>
-              </form>
-
-              <div className="mt-6 border-t border-slate-200 pt-6 text-center">
-                <p className="text-xs text-slate-500">
-                  New operator or patient wishing to self-register?{" "}
-                  <button
-                    onClick={() => {
-                      setIsRegister(true);
-                      setError(null);
-                      setFeedbackMsg("");
-                    }}
-                    className="font-bold text-blue-600 hover:underline"
-                  >
-                    Register Account Link
-                  </button>
-                </p>
-              </div>
-            </div>
-          ) : (
-            /* REGISTRATION SCREEN */
-            <div>
-              <div className="text-center mb-6">
-                <p className="text-slate-600 text-sm">Please provide high-integrity details in accordance with healthcare HIPAA standards.</p>
-              </div>
-
-              <form onSubmit={handleRegisterSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                      Full Legal Name
-                    </label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-                      <input
-                        type="text"
-                        required
-                        placeholder="Asha Sharma"
-                        value={regName}
-                        onChange={(e) => setRegName(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-indigo-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                      Email Address
-                    </label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-                      <input
-                        type="email"
-                        required
-                        placeholder="asha@example.com"
-                        value={regEmail}
-                        onChange={(e) => setRegEmail(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-indigo-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                      Credential Password
-                    </label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-                      <input
-                        type="password"
-                        required
-                        placeholder="minimum 8 characters"
-                        value={regPassword}
-                        onChange={(e) => setRegPassword(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-indigo-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                      Phone Number
-                    </label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-                      <input
-                        type="tel"
-                        required
-                        placeholder="9876543210"
-                        value={regPhone}
-                        onChange={(e) => setRegPhone(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-indigo-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                      Assigned Role
-                    </label>
-                    <select
-                      value={regRole}
-                      onChange={(e) => setRegRole(e.target.value as UserRole)}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-indigo-500 bg-white"
-                    >
-                      <option value="ROLE_PATIENT">Patient Profile</option>
-                      <option value="ROLE_DOCTOR">Doctor Practitioner</option>
-                      <option value="ROLE_ADMIN">Health Administrator</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                      Gender Marker
-                    </label>
-                    <select
-                      value={regGender}
-                      onChange={(e) => setRegGender(e.target.value as Gender)}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-indigo-500 bg-white"
-                    >
-                      <option value="FEMALE">Female</option>
-                      <option value="MALE">Male</option>
-                      <option value="OTHER">Other / Non-Binary</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                      Date of Birth
-                    </label>
-                    <div className="relative">
-                      <Calendar className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-                      <input
-                        type="date"
-                        required
-                        value={regDob}
-                        onChange={(e) => setRegDob(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-indigo-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
-                      Residential Address
-                    </label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-                      <input
-                        type="text"
-                        required
-                        placeholder="City, Lane, Apt"
-                        value={regAddress}
-                        onChange={(e) => setRegAddress(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full flex justify-center py-2.5 px-4 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition rounded-lg shadow-md cursor-pointer"
-                  >
-                    {loading ? "Registering secure record..." : "Register New Account"}
-                  </button>
-                </div>
-              </form>
-
-              <div className="mt-6 border-t border-slate-200 pt-6 text-center">
-                <p className="text-xs text-slate-500">
-                  Already have access?{" "}
-                  <button
-                    onClick={() => {
-                      setIsRegister(false);
-                      setError(null);
-                      setFeedbackMsg("");
-                    }}
-                    className="font-bold text-blue-600 hover:underline"
-                  >
-                    Back to Sign In
-                  </button>
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+                <p className="auth-switch">Already have an account?<button type="button" className="text-link" onClick={() => { setIsRegister(false); setError(null); setFeedbackMsg(""); }}>Sign in</button></p>
+              </>
+            )}
+          </div>
+        </section>
+      </main>
+      <footer className="auth-footer"><span>© {new Date().getFullYear()} Health Mate</span><span>Thoughtfully connected. Simply cared for.</span></footer>
     </div>
   );
 };

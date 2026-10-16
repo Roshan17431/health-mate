@@ -3,6 +3,8 @@ package com.example.health.mate.repository;
 import com.example.health.mate.domain.OtpPurpose;
 import com.example.health.mate.entity.OtpToken;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -15,13 +17,9 @@ public interface OtpTokenRepository extends CrudRepository<OtpToken,Long> {
             OtpPurpose purpose
     );
 
-    // Get valid OTP (not used and not expired)
-    Optional<OtpToken> findByEmailAndOtpCodeAndPurposeAndIsUsedFalseAndExpiresAtAfter(
-            String email,
-            String otpCode,
-            OtpPurpose purpose,
-            LocalDateTime currentTime
-    );
+    // Lock the latest challenge so older codes cannot authorize another reset.
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<OtpToken> findFirstByEmailAndPurposeOrderByCreatedAtDescIdDesc(String email, OtpPurpose purpose);
 
     //  Get all OTPs for email (optional use)
     List<OtpToken> findByEmail(String email);

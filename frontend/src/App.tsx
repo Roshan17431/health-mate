@@ -41,8 +41,8 @@ export default function App() {
   if (!authChecked) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
-        <Heart className="w-8 h-8 text-indigo-600 animate-pulse mb-2" />
-        <p className="text-sm text-slate-500 font-medium">Validating Secure Medical Keychain...</p>
+        <Heart className="w-8 h-8 text-teal-600 animate-pulse mb-2" />
+        <p className="text-sm text-slate-500 font-medium">Getting things ready…</p>
       </div>
     );
   }
@@ -69,18 +69,18 @@ export default function App() {
       dashboardView = (
         <div className="bg-white border border-slate-200 p-8 rounded-xl max-w-lg mx-auto my-12 text-center shadow">
           <ShieldAlert className="w-12 h-12 text-rose-500 mx-auto mb-3" />
-          <h2 className="text-lg font-bold text-slate-800">Access Authorization Error</h2>
+          <h2 className="text-lg font-bold text-slate-800">We could not open your workspace</h2>
           <p className="text-sm text-slate-500 mt-2">
-            Your account role specification ({user.role}) is unrecognized by current gateway layers.
+            Your account role ({user.role}) is not recognized. Please sign in again.
           </p>
           <button
             onClick={() => {
               clearSession();
               syncAuth();
             }}
-            className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-750 transition"
+            className="mt-4 px-4 py-2 bg-teal-600 text-white rounded-lg text-xs font-semibold hover:bg-teal-750 transition"
           >
-            Clear Stale Session
+            Back to sign in
           </button>
         </div>
       );
