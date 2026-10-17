@@ -41,8 +41,15 @@ export const getSessionToken = (): string | null => {
 };
 
 export const getSessionUser = (): UserDTO | null => {
-  const userJson = localStorage.getItem("healthmate_user");
-  return userJson ? JSON.parse(userJson) : null;
+  try {
+    const userJson = localStorage.getItem("healthmate_user");
+    const user = userJson ? JSON.parse(userJson) : null;
+    if (getSessionToken() && user && Number.isInteger(user.id)
+        && ["ROLE_PATIENT", "ROLE_DOCTOR", "ROLE_ADMIN"].includes(user.role)) return user;
+  } catch { /* Discard malformed persisted sessions. */ }
+  localStorage.removeItem("healthmate_token");
+  localStorage.removeItem("healthmate_user");
+  return null;
 };
 
 export const saveSession = (token: string, user: UserDTO) => {
@@ -86,7 +93,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     if (response.status === 401) {
       clearSession();
     }
-    throw data ?? { statusCode: response.status, message: response.statusText };
+    throw data || { statusCode: response.status, message: response.statusText || "Request failed. Please try again." };
   }
 
   return data as T;
@@ -119,6 +126,10 @@ export async function registerUser(dto: RegisterRequestDTO): Promise<AuthRespons
   });
   saveSession(response.token, response.user);
   return response;
+}
+
+export async function createStaffUser(dto: RegisterRequestDTO): Promise<UserDTO> {
+  return request<UserDTO>("/api/admin/users", { method: "POST", body: JSON.stringify(dto) });
 }
 
 export async function fetchUsers(): Promise<UserDTO[]> {
@@ -401,8 +412,8 @@ export async function deleteAuditLog(id: number): Promise<void> {
   return request<void>(`/api/audit-logs/${id}`, { method: "DELETE" });
 }
 
-export async function sendOtp(dto: SendOtpRequestDTO): Promise<OtpTokenDTO> {
-  return request<OtpTokenDTO>("/api/otp/send", {
+export async function sendOtp(dto: SendOtpRequestDTO): Promise<{ message: string }> {
+  return request<{ message: string }>("/api/otp/send", {
     method: "POST",
     body: JSON.stringify(dto),
   });
