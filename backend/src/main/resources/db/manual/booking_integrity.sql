@@ -10,7 +10,56 @@ DO $$
 DECLARE
     old_constraint record;
     old_index record;
+    expected_index record;
+    existing_relation oid;
 BEGIN
+    -- IF NOT EXISTS only checks the relation name. A wrong, nonunique, or invalid
+    -- existing index must not silently disable booking protection. Validate both
+    -- reserved names before removing any legacy uniqueness; abort for review.
+    FOR expected_index IN
+        SELECT * FROM (VALUES
+            ('uq_appointments_active_doctor_datetime',
+             ARRAY['doctor_id', 'appointment_date_time'],
+             ARRAY['int8_ops', 'timestamp_ops'],
+             'status<>''CANCELED'''),
+            ('uq_appointments_active_time_slot',
+             ARRAY['time_slot_id'],
+             ARRAY['int8_ops'],
+             'time_slot_idISNOTNULLANDstatus<>''CANCELED''')
+        ) AS expected(index_name, key_columns, operator_classes, predicate)
+    LOOP
+        existing_relation := to_regclass(format('public.%I', expected_index.index_name));
+        IF existing_relation IS NOT NULL AND NOT EXISTS (
+            SELECT 1
+            FROM pg_index i
+            JOIN pg_class idx ON idx.oid = i.indexrelid
+            JOIN pg_am am ON am.oid = idx.relam
+            WHERE i.indexrelid = existing_relation
+              AND i.indrelid = 'public.appointments'::regclass
+              AND i.indisunique AND i.indisvalid AND i.indisready AND i.indislive
+              AND i.indimmediate AND am.amname = 'btree'
+              AND i.indexprs IS NULL
+              AND i.indnkeyatts = cardinality(expected_index.key_columns)
+              AND ARRAY(
+                  SELECT a.attname::text
+                  FROM unnest(i.indkey) WITH ORDINALITY AS key(attnum, position)
+                  JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = key.attnum
+                  WHERE key.position <= i.indnkeyatts ORDER BY key.position
+              ) = expected_index.key_columns
+              AND ARRAY(
+                  SELECT op.opcname::text
+                  FROM unnest(i.indclass) WITH ORDINALITY AS key(opclass, position)
+                  JOIN pg_opclass op ON op.oid = key.opclass
+                  JOIN pg_namespace ns ON ns.oid = op.opcnamespace AND ns.nspname = 'pg_catalog'
+                  ORDER BY key.position
+              ) = expected_index.operator_classes
+              AND regexp_replace(pg_get_expr(i.indpred, i.indrelid),
+                                 '[[:space:]()]|::text', '', 'g') = expected_index.predicate
+        ) THEN
+            RAISE EXCEPTION 'Reserved index % has an unexpected or invalid definition. Review it before migrating.', expected_index.index_name;
+        END IF;
+    END LOOP;
+
     IF EXISTS (
         SELECT 1
         FROM public.appointments
@@ -56,7 +105,8 @@ BEGIN
     END LOOP;
 
     -- Cover equivalent standalone legacy indexes, without touching partial indexes,
-    -- multi-column indexes, expression indexes, or indexes supporting other constraints.
+    -- multi-key indexes, expression indexes, or indexes supporting other constraints.
+    -- INCLUDE payload does not change uniqueness on the single time_slot_id key.
     FOR old_index IN
         SELECT n.nspname, idx.relname
         FROM pg_index i
@@ -66,7 +116,6 @@ BEGIN
         WHERE i.indrelid = 'public.appointments'::regclass
           AND i.indisunique
           AND i.indnkeyatts = 1
-          AND i.indnatts = 1
           AND i.indkey[0] = a.attnum
           AND i.indpred IS NULL
           AND i.indexprs IS NULL
