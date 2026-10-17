@@ -20,20 +20,25 @@ public class PatientService {
 
     private final PatientRepository patientRepository;
     private final UserService userService;
+    private final ProfileDeletionService profileDeletion;
 
-    public PatientService(PatientRepository patientRepository, UserService userService) {
+    public PatientService(PatientRepository patientRepository, UserService userService,
+                          ProfileDeletionService profileDeletion) {
         this.patientRepository = patientRepository;
         this.userService = userService;
+        this.profileDeletion = profileDeletion;
     }
 
 
     public PatientDTO createPatient(PatientRequestDTO request) {
         User user = userService.getUserEntity(request.getUserId());
+        if (user.getRole() != USER_ROLE.ROLE_PATIENT) {
+            throw new OurException("Patient profiles require a patient account");
+        }
         if (patientRepository.existsByUserId(user.getId())) {
             throw new OurException("Patient profile already exists for user id: " + user.getId());
         }
 
-        user.setRole(USER_ROLE.ROLE_PATIENT);
         Patient patient = new Patient();
         patient.setUser(user);
         return toDto(patientRepository.save(patient));
@@ -61,7 +66,7 @@ public class PatientService {
 
 
     public void deletePatient(Long id) {
-        patientRepository.delete(getPatientEntity(id));
+        profileDeletion.deletePatient(id);
     }
 
 

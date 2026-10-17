@@ -38,11 +38,11 @@ public class Doctor {
     private LocalDateTime updatedAt;
 
     @MapsId
-    @OneToOne(cascade = CascadeType.ALL,orphanRemoval = true)
+    @OneToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "doctor")
     @JsonIgnore
     private List<Appointment> appointments;
 }

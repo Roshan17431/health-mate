@@ -42,9 +42,6 @@ public class TimeSlot {
     @Column(nullable = false)
     private SlotStatus status = SlotStatus.AVAILABLE;
 
-    @OneToOne(mappedBy = "timeSlot")
-    private Appointment appointment;
-
     @CreationTimestamp
     private LocalDateTime createdAt;
 

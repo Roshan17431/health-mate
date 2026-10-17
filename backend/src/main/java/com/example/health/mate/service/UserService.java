@@ -5,6 +5,8 @@ import com.example.health.mate.dto.UserUpdateDTO;
 import com.example.health.mate.entity.User;
 import com.example.health.mate.exception.OurException;
 import com.example.health.mate.repository.UserRepository;
+import com.example.health.mate.repository.AuditLogRepository;
+import com.example.health.mate.repository.NotificationRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,9 +18,16 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final ProfileDeletionService profileDeletion;
+    private final NotificationRepository notifications;
+    private final AuditLogRepository audits;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, ProfileDeletionService profileDeletion,
+                       NotificationRepository notifications, AuditLogRepository audits) {
         this.userRepository = userRepository;
+        this.profileDeletion = profileDeletion;
+        this.notifications = notifications;
+        this.audits = audits;
     }
 
 
@@ -54,6 +63,9 @@ public class UserService {
 
     public void deleteUser(Long id) {
         User user = getUserEntity(id);
+        profileDeletion.deleteProfilesForUser(id);
+        notifications.deleteByUserId(id);
+        audits.unlinkUser(id);
         userRepository.delete(user);
     }
 
