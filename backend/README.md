@@ -230,3 +230,13 @@ http://localhost:8080/v3/api-docs
 **Roshan Mathew**
 
 Built using Spring Boot, Spring Security, JPA, JWT, and modern backend development practices.
+
+### Applying the Phase 2 security repairs
+
+Public registration now creates patients only. An authenticated administrator creates doctor/admin accounts through **People → Add a clinic team member** (`POST /api/admin/users`); create the doctor's clinical profile separately in **Doctors**. Existing administrators remain available. New installations need an administrator provisioned by the trusted deployment operator; public signup cannot bootstrap administrative access.
+
+Before upgrading an existing PostgreSQL database, back it up and stop application writers. Review and explicitly run `src/main/resources/db/manual/booking_integrity.sql` and `src/main/resources/db/manual/audit_actor_snapshot.sql` against the intended database. These scripts are **not run automatically**. The booking script aborts if legacy bookings conflict, preserves every appointment, replaces the old slot uniqueness constraint with active-booking uniqueness, and permits canceled-slot rebooking. Resolve any reported legacy conflicts by reviewing records before retrying; do not delete clinical history to force the migration through. `ddl-auto=update` alone cannot remove the old slot constraint.
+
+Account/profile deletion returns HTTP 409 when appointment history exists. Unlinking an unused clinical profile preserves its user account. Audit events come from the server, retain actor IDs after account deletion, and cannot be created/deleted through the API. Password reset invalidates previously issued access tokens; older tokens without a credential fingerprint require sign-in again.
+
+Production startup requires `JWT_SECRET` (a private Base64 signing key of at least 32 random bytes). Schema changes and seed data are disabled by default in the production profile (`HIBERNATE_DDL_AUTO=none`, `SQL_INIT_MODE=never`). Use explicit schema setup only for a new disposable database or a reviewed deployment migration. Keep SMTP credentials and JWT signing keys out of Git.
