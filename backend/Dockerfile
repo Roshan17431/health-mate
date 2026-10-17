@@ -1,26 +1,24 @@
-FROM eclipse-temurin:17-jdk-jammy AS build
-
+# Override image references with approved, scanned digests for a release.
+ARG JDK_IMAGE=eclipse-temurin:17-jdk-jammy
+ARG JRE_IMAGE=eclipse-temurin:17-jre-jammy
+FROM ${JDK_IMAGE} AS build
 WORKDIR /workspace
-
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
-RUN ./mvnw -B -DskipTests dependency:go-offline
-
+RUN chmod +x mvnw
 COPY src/ src/
-RUN ./mvnw -B -DskipTests package
+RUN rm -f src/main/resources/data.sql
+RUN --mount=type=cache,target=/root/.m2 ./mvnw -B -ntp verify
 
-FROM eclipse-temurin:17-jre-jammy
-
+FROM ${JRE_IMAGE}
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --gid 10001 spring && useradd --uid 10001 --gid spring --no-create-home spring
 WORKDIR /app
-
-RUN groupadd --system spring && useradd --system --gid spring spring
-
-COPY --from=build /workspace/target/*.jar app.jar
-
-USER spring
-
-EXPOSE 10000
-
-ENV JAVA_OPTS="-XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
-
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]
+COPY --from=build --chown=spring:spring /workspace/target/health-mate-0.0.1-SNAPSHOT.jar app.jar
+USER 10001:10001
+ENV SPRING_PROFILES_ACTIVE=prod JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
+EXPOSE 8080
+HEALTHCHECK --interval=15s --timeout=5s --start-period=90s --retries=5 \
+    CMD curl --fail --silent "http://127.0.0.1:${SERVER_PORT:-${PORT:-8080}}/actuator/health/readiness" > /dev/null || exit 1
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

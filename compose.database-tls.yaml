@@ -1,0 +1,9 @@
+# Add for an external PostgreSQL URL using /run/secrets/db-ca.crt.
+services:
+  backend:
+    secrets:
+      - source: database-ca
+        target: db-ca.crt
+secrets:
+  database-ca:
+    file: ${DB_CA_FILE:?Set DB_CA_FILE to the public database CA certificate file}

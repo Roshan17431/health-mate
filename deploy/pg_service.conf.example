@@ -1,0 +1,18 @@
+# Copy under a private directory; never store passwords in this file or command arguments.
+[healthmate_owner]
+host=db.example.com
+port=5432
+dbname=healthmate
+user=healthmate_owner
+sslmode=verify-full
+sslrootcert=/run/secrets/db-ca.crt
+passfile=/run/secrets/pgpass
+
+[healthmate_recovery]
+host=db.example.com
+port=5432
+dbname=healthmate_recovery
+user=healthmate_owner
+sslmode=verify-full
+sslrootcert=/run/secrets/db-ca.crt
+passfile=/run/secrets/pgpass
