@@ -8,8 +8,11 @@ import com.example.health.mate.entity.Appointment;
 import com.example.health.mate.entity.Doctor;
 import com.example.health.mate.entity.Patient;
 import com.example.health.mate.entity.TimeSlot;
+import com.example.health.mate.exception.ConflictException;
 import com.example.health.mate.exception.OurException;
 import com.example.health.mate.repository.AppointmentRepository;
+import com.example.health.mate.repository.DoctorRepository;
+import com.example.health.mate.repository.PatientRepository;
 import com.example.health.mate.repository.TimeSlotRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,42 +30,41 @@ public class AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
     private final TimeSlotRepository timeSlotRepository;
-    private final DoctorService doctorService;
-    private final PatientService patientService;
+    private final DoctorRepository doctorRepository;
+    private final PatientRepository patientRepository;
 
     public AppointmentService(
             AppointmentRepository appointmentRepository,
             TimeSlotRepository timeSlotRepository,
-            DoctorService doctorService,
-            PatientService patientService
+            DoctorRepository doctorRepository,
+            PatientRepository patientRepository
     ) {
         this.appointmentRepository = appointmentRepository;
         this.timeSlotRepository = timeSlotRepository;
-        this.doctorService = doctorService;
-        this.patientService = patientService;
+        this.doctorRepository = doctorRepository;
+        this.patientRepository = patientRepository;
     }
 
 
     public AppointmentDTO createAppointment(AppointmentRequestDTO request) {
-        Doctor doctor = doctorService.getDoctorEntity(request.getDoctorId());
-        Patient patient = patientService.getPatientEntity(request.getPatientId());
+        // Every booking mutation locks the doctor before reading appointment or slot state.
+        Doctor doctor = lockDoctor(request.getDoctorId());
+        Patient patient = patientRepository.findByIdForUpdate(request.getPatientId())
+                .orElseThrow(() -> new OurException("Patient not found with id: " + request.getPatientId()));
         TimeSlot timeSlot = null;
 
-        if (!appointmentRepository
-                .findByDoctorIdAndAppointmentDateTime(doctor.getId(), request.getAppointmentDateTime())
-                .isEmpty()) {
-            throw new OurException("Doctor already has an appointment at this time");
-        }
+        ensureDoctorAvailable(doctor.getId(), request.getAppointmentDateTime(), null);
 
         if (request.getTimeSlotId() != null) {
             timeSlot = timeSlotRepository.findById(request.getTimeSlotId())
                     .orElseThrow(() -> new OurException("Time slot not found with id: " + request.getTimeSlotId()));
-            if (timeSlot.getStatus() != SlotStatus.AVAILABLE) {
-                throw new OurException("Time slot is not available");
-            }
             if (!doctor.getId().equals(timeSlot.getDoctor().getId())) {
                 throw new OurException("Time slot does not belong to the selected doctor");
             }
+            if (!request.getAppointmentDateTime().equals(timeSlot.getSlotDate().atTime(timeSlot.getStartTime()))) {
+                throw new OurException("Appointment date and time must match the selected time slot");
+            }
+            ensureSlotAvailable(timeSlot, null);
             timeSlot.setStatus(SlotStatus.BOOKED);
         }
 
@@ -122,11 +124,21 @@ public class AppointmentService {
 
 
     public AppointmentDTO updateStatus(Long id, STATUS status) {
-        Appointment appointment = getAppointmentEntity(id);
-        appointment.setStatus(status);
-        if (status == STATUS.CANCELED && appointment.getTimeSlot() != null) {
+        Appointment appointment = lockAppointment(id);
+        if (status == null) {
+            throw new OurException("Appointment status is required");
+        }
+        if (appointment.getStatus() == STATUS.CANCELED && status != STATUS.CANCELED) {
+            ensureDoctorAvailable(appointment.getDoctor().getId(), appointment.getAppointmentDateTime(), id);
+            if (appointment.getTimeSlot() != null) {
+                ensureSlotAvailable(appointment.getTimeSlot(), id);
+                appointment.getTimeSlot().setStatus(SlotStatus.BOOKED);
+            }
+        } else if (appointment.getStatus() != STATUS.CANCELED && status == STATUS.CANCELED
+                && appointment.getTimeSlot() != null) {
             appointment.getTimeSlot().setStatus(SlotStatus.AVAILABLE);
         }
+        appointment.setStatus(status);
         return toDto(appointmentRepository.save(appointment));
     }
 
@@ -137,8 +149,8 @@ public class AppointmentService {
 
 
     public void deleteAppointment(Long id) {
-        Appointment appointment = getAppointmentEntity(id);
-        if (appointment.getTimeSlot() != null) {
+        Appointment appointment = lockAppointment(id);
+        if (appointment.getStatus() != STATUS.CANCELED && appointment.getTimeSlot() != null) {
             appointment.getTimeSlot().setStatus(SlotStatus.AVAILABLE);
         }
         appointmentRepository.delete(appointment);
@@ -172,5 +184,30 @@ public class AppointmentService {
 
     private String generateAppointmentCode() {
         return "APT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
+
+    private Doctor lockDoctor(Long id) {
+        return doctorRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new OurException("Doctor not found with id: " + id));
+    }
+
+    private Appointment lockAppointment(Long id) {
+        Long doctorId = appointmentRepository.findDoctorIdById(id)
+                .orElseThrow(() -> new OurException("Appointment not found with id: " + id));
+        lockDoctor(doctorId);
+        return getAppointmentEntity(id);
+    }
+
+    private void ensureDoctorAvailable(Long doctorId, LocalDateTime time, Long excludedId) {
+        if (appointmentRepository.hasConflictingAppointment(doctorId, time, STATUS.CANCELED, excludedId)) {
+            throw new ConflictException("Doctor already has an appointment at this time");
+        }
+    }
+
+    private void ensureSlotAvailable(TimeSlot timeSlot, Long excludedId) {
+        if (timeSlot.getStatus() != SlotStatus.AVAILABLE
+                || appointmentRepository.hasConflictingSlotAppointment(timeSlot.getId(), STATUS.CANCELED, excludedId)) {
+            throw new ConflictException("Time slot is not available");
+        }
     }
 }

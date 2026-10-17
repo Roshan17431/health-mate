@@ -55,8 +55,8 @@ public class Appointment {
     @JsonIgnore
     private Patient patient;
 
-    // One appointment -> One time slot (optional, for new slot-based bookings)
-    @OneToOne
+    // Canceled bookings keep their slot reference when the slot is booked again.
+    @ManyToOne
     @JoinColumn(name = "time_slot_id")
     @JsonIgnore
     private TimeSlot timeSlot;

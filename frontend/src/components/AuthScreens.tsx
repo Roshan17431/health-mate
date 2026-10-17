@@ -7,7 +7,7 @@ import React, { useState } from "react";
 import { Lock, Mail, Phone, Calendar, User, MapPin, Check, HeartPulse, Stethoscope, ArrowRight, ArrowLeft } from "lucide-react";
 import { Brand } from "./Brand";
 import { loginUser, registerUser, sendOtp, verifyOtp, resetPassword } from "../api/client";
-import { RegisterRequestDTO, Gender, UserRole, OtpPurpose } from "../types";
+import { RegisterRequestDTO, Gender, OtpPurpose } from "../types";
 import { ApiErrorAlert } from "./CommonUI";
 
 interface AuthScreensProps {
@@ -34,7 +34,6 @@ export const AuthScreens: React.FC<AuthScreensProps> = ({ onAuthSuccess, initial
   const [regEmail, setRegEmail] = useState("");
   const [regPassword, setRegPassword] = useState("");
   const [regPhone, setRegPhone] = useState("");
-  const [regRole, setRegRole] = useState<UserRole>("ROLE_PATIENT");
   const [regGender, setRegGender] = useState<Gender>("FEMALE");
   const [regDob, setRegDob] = useState("");
   const [regAddress, setRegAddress] = useState("");
@@ -99,7 +98,7 @@ export const AuthScreens: React.FC<AuthScreensProps> = ({ onAuthSuccess, initial
         email: regEmail,
         password: regPassword,
         phoneNumber: regPhone,
-        role: regRole,
+        role: "ROLE_PATIENT",
         gender: regGender,
         dateOfBirth: regDob,
         address: regAddress,
@@ -333,10 +332,6 @@ export const AuthScreens: React.FC<AuthScreensProps> = ({ onAuthSuccess, initial
                     <div className="auth-field">
                       <label htmlFor="reg-phone">Phone number</label>
                       <div className="field-with-icon"><Phone aria-hidden="true" /><input id="reg-phone" className="auth-input" required type="tel" autoComplete="tel" placeholder="Your phone number" value={regPhone} onChange={(e) => setRegPhone(e.target.value)} /></div>
-                    </div>
-                    <div className="auth-field">
-                      <label htmlFor="reg-role">Account type</label>
-                      <select id="reg-role" className="auth-input" value={regRole} onChange={(e) => setRegRole(e.target.value as UserRole)}><option value="ROLE_PATIENT">Patient</option><option value="ROLE_DOCTOR">Doctor</option><option value="ROLE_ADMIN">Administrator</option></select>
                     </div>
                     <div className="auth-field">
                       <label htmlFor="reg-gender">Gender</label>

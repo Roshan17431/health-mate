@@ -4,6 +4,7 @@ import com.example.health.mate.dto.DoctorScheduleDTO;
 import com.example.health.mate.dto.DoctorScheduleRequestDTO;
 import com.example.health.mate.service.DoctorScheduleService;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,6 +33,7 @@ public class DoctorScheduleController {
     }
 
     @PostMapping
+    @PreAuthorize("@access.doctorOwner(#request.doctorId)")
     public ResponseEntity<DoctorScheduleDTO> createSchedule(
             @Valid @RequestBody DoctorScheduleRequestDTO request
     ) {
@@ -39,16 +41,19 @@ public class DoctorScheduleController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("@access.schedule(#id)")
     public ResponseEntity<DoctorScheduleDTO> getScheduleById(@PathVariable Long id) {
         return ResponseEntity.ok(doctorScheduleService.getScheduleById(id));
     }
 
     @GetMapping("/doctor/{doctorId}")
+    @PreAuthorize("@access.doctorOwner(#doctorId)")
     public ResponseEntity<List<DoctorScheduleDTO>> getActiveSchedulesByDoctor(@PathVariable Long doctorId) {
         return ResponseEntity.ok(doctorScheduleService.getActiveSchedulesByDoctor(doctorId));
     }
 
     @GetMapping("/doctor/{doctorId}/day/{dayOfWeek}")
+    @PreAuthorize("@access.doctorOwner(#doctorId)")
     public ResponseEntity<List<DoctorScheduleDTO>> getActiveSchedulesByDoctorAndDay(
             @PathVariable Long doctorId,
             @PathVariable DayOfWeek dayOfWeek
@@ -57,6 +62,7 @@ public class DoctorScheduleController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("@access.scheduleUpdate(#id, #request.doctorId)")
     public ResponseEntity<DoctorScheduleDTO> updateSchedule(
             @PathVariable Long id,
             @Valid @RequestBody DoctorScheduleRequestDTO request
@@ -65,6 +71,7 @@ public class DoctorScheduleController {
     }
 
     @PatchMapping("/{id}/active")
+    @PreAuthorize("@access.schedule(#id)")
     public ResponseEntity<DoctorScheduleDTO> setScheduleActive(
             @PathVariable Long id,
             @RequestParam boolean active
@@ -73,6 +80,7 @@ public class DoctorScheduleController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@access.schedule(#id)")
     public ResponseEntity<Void> deleteSchedule(@PathVariable Long id) {
         doctorScheduleService.deleteSchedule(id);
         return ResponseEntity.noContent().build();

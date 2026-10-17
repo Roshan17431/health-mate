@@ -150,6 +150,28 @@ spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
 ```
 
+### Configure OTP Email
+
+Copy `.env.example` to `.env` in the backend directory and set `SMTP_HOST`,
+`SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, and `SMTP_FROM` using your email
+provider's SMTP credentials and a sender address verified with that provider.
+Keep `.env` private. Port 587 defaults to authenticated SMTP with STARTTLS
+required and server certificate identity checking enabled. For a provider that
+requires implicit TLS on port 465, set `SMTP_SSL_ENABLED=true`,
+`SMTP_STARTTLS_ENABLED=false`, and `SMTP_STARTTLS_REQUIRED=false`.
+
+OTP issuance sends the six-digit code to the requested email address. Codes
+expire in 10 minutes and are never returned in the send response. Missing SMTP
+configuration or failed delivery returns a generic service-unavailable response;
+the failed attempt leaves no new OTP row in the database. The existing account
+and IP rate limits still apply to delivery attempts.
+
+For a local SMTP sink, point `SMTP_HOST=localhost` and `SMTP_PORT` to the sink's
+SMTP listener and use a test-only `SMTP_FROM`. Set `SMTP_AUTH=false`,
+`SMTP_STARTTLS_ENABLED=false`, and `SMTP_STARTTLS_REQUIRED=false` only for that
+local sink. Integration tests start their own loopback SMTP sink on an ephemeral
+port and use H2; no external emails or production database writes are needed.
+
 ### Run Application
 
 ```bash
@@ -208,3 +230,13 @@ http://localhost:8080/v3/api-docs
 **Roshan Mathew**
 
 Built using Spring Boot, Spring Security, JPA, JWT, and modern backend development practices.
+
+### Applying the Phase 2 security repairs
+
+Public registration now creates patients only. An authenticated administrator creates doctor/admin accounts through **People → Add a clinic team member** (`POST /api/admin/users`); create the doctor's clinical profile separately in **Doctors**. Existing administrators remain available. New installations need an administrator provisioned by the trusted deployment operator; public signup cannot bootstrap administrative access.
+
+Before upgrading an existing PostgreSQL database, back it up and stop application writers. Review and explicitly run `src/main/resources/db/manual/booking_integrity.sql` and `src/main/resources/db/manual/audit_actor_snapshot.sql` against the intended database. These scripts are **not run automatically**. The booking script aborts if legacy bookings conflict, preserves every appointment, replaces the old slot uniqueness constraint with active-booking uniqueness, and permits canceled-slot rebooking. Resolve any reported legacy conflicts by reviewing records before retrying; do not delete clinical history to force the migration through. `ddl-auto=update` alone cannot remove the old slot constraint.
+
+Account/profile deletion returns HTTP 409 when appointment history exists. Unlinking an unused clinical profile preserves its user account. Audit events come from the server, retain actor IDs after account deletion, and cannot be created/deleted through the API. Password reset invalidates previously issued access tokens; older tokens without a credential fingerprint require sign-in again.
+
+Production startup requires `JWT_SECRET` (a private Base64 signing key of at least 32 random bytes). Schema changes and seed data are disabled by default in the production profile (`HIBERNATE_DDL_AUTO=none`, `SQL_INIT_MODE=never`). Use explicit schema setup only for a new disposable database or a reviewed deployment migration. Keep SMTP credentials and JWT signing keys out of Git.

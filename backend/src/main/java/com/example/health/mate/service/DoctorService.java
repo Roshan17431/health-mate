@@ -18,20 +18,25 @@ public class DoctorService {
 
     private final DoctorRepository doctorRepository;
     private final UserService userService;
+    private final ProfileDeletionService profileDeletion;
 
-    public DoctorService(DoctorRepository doctorRepository, UserService userService) {
+    public DoctorService(DoctorRepository doctorRepository, UserService userService,
+                         ProfileDeletionService profileDeletion) {
         this.doctorRepository = doctorRepository;
         this.userService = userService;
+        this.profileDeletion = profileDeletion;
     }
 
 
     public DoctorDTO createDoctor(DoctorRequestDTO request) {
         User user = userService.getUserEntity(request.getUserId());
+        if (user.getRole() != USER_ROLE.ROLE_DOCTOR) {
+            throw new OurException("Doctor profiles require a doctor account");
+        }
         if (doctorRepository.existsByUserId(user.getId())) {
             throw new OurException("Doctor profile already exists for user id: " + user.getId());
         }
 
-        user.setRole(USER_ROLE.ROLE_DOCTOR);
         Doctor doctor = new Doctor();
         doctor.setUser(user);
         doctor.setExperience(request.getExperience());
@@ -75,7 +80,7 @@ public class DoctorService {
 
 
     public void deleteDoctor(Long id) {
-        doctorRepository.delete(getDoctorEntity(id));
+        profileDeletion.deleteDoctor(id);
     }
 
 

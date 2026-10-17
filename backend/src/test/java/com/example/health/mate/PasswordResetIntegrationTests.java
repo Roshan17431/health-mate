@@ -4,6 +4,7 @@ import com.example.health.mate.domain.OtpPurpose;
 import com.example.health.mate.entity.OtpToken;
 import com.example.health.mate.repository.OtpTokenRepository;
 import com.example.health.mate.repository.UserRepository;
+import com.example.health.mate.support.TestSmtpInitializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -27,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /** Exercises real HTTP, security filters, transactions and password hashing against H2 only. */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
+@ContextConfiguration(initializers = TestSmtpInitializer.class)
 class PasswordResetIntegrationTests {
     @LocalServerPort int port;
     @Autowired OtpTokenRepository otps;

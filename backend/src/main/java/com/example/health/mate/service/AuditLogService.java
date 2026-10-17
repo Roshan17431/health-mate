@@ -20,23 +20,22 @@ import java.util.List;
 public class AuditLogService {
 
     private final AuditLogRepository auditLogRepository;
-    private final UserService userService;
+    private final com.example.health.mate.repository.UserRepository users;
 
-    public AuditLogService(AuditLogRepository auditLogRepository, UserService userService) {
+    public AuditLogService(AuditLogRepository auditLogRepository, com.example.health.mate.repository.UserRepository users) {
         this.auditLogRepository = auditLogRepository;
-        this.userService = userService;
-    }
-
-
-    public AuditLogDTO createAuditLog(AuditLogRequestDTO request) {
-        User user = request.getUserId() == null ? null : userService.getUserEntity(request.getUserId());
-        return toDto(saveAuditLog(user, request.getAction(), request.getDetails()));
+        this.users = users;
     }
 
 
     public AuditLogDTO logAction(Long userId, String action, String details) {
-        User user = userId == null ? null : userService.getUserEntity(userId);
-        return toDto(saveAuditLog(user, action, details));
+        User user = userId == null ? null : users.findById(userId).orElse(null);
+        AuditLog event = new AuditLog();
+        event.setUser(user);
+        event.setActorUserId(userId);
+        event.setAction(action);
+        event.setDetails(details);
+        return toDto(auditLogRepository.save(event));
     }
 
 
@@ -63,11 +62,6 @@ public class AuditLogService {
     }
 
 
-    public void deleteAuditLog(Long id) {
-        auditLogRepository.delete(getAuditLogEntity(id));
-    }
-
-
     @Transactional(readOnly = true)
     public AuditLog getAuditLogEntity(Long id) {
         return auditLogRepository.findById(id)
@@ -81,7 +75,7 @@ public class AuditLogService {
         }
         return new AuditLogDTO(
                 auditLog.getId(),
-                auditLog.getUser() != null ? auditLog.getUser().getId() : null,
+                auditLog.getActorUserId() != null ? auditLog.getActorUserId() : auditLog.getUser() != null ? auditLog.getUser().getId() : null,
                 auditLog.getAction(),
                 auditLog.getDetails(),
                 auditLog.getTimestamp()

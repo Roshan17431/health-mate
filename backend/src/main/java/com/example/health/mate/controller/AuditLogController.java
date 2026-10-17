@@ -4,6 +4,7 @@ import com.example.health.mate.dto.AuditLogDTO;
 import com.example.health.mate.dto.AuditLogRequestDTO;
 import com.example.health.mate.service.AuditLogService;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -32,22 +33,20 @@ public class AuditLogController {
         this.auditLogService = auditLogService;
     }
 
-    @PostMapping
-    public ResponseEntity<AuditLogDTO> createAuditLog(@Valid @RequestBody AuditLogRequestDTO request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(auditLogService.createAuditLog(request));
-    }
-
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<AuditLogDTO>> getAllAuditLogs() {
         return ResponseEntity.ok(auditLogService.getAllAuditLogs());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AuditLogDTO> getAuditLogById(@PathVariable Long id) {
         return ResponseEntity.ok(auditLogService.getAuditLogById(id));
     }
 
     @GetMapping("/user/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<AuditLogDTO>> getAuditLogsByUser(
             @PathVariable Long userId,
             Pageable pageable
@@ -56,6 +55,7 @@ public class AuditLogController {
     }
 
     @GetMapping("/range")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<AuditLogDTO>> getAuditLogsBetween(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end
@@ -63,9 +63,4 @@ public class AuditLogController {
         return ResponseEntity.ok(auditLogService.getAuditLogsBetween(start, end));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAuditLog(@PathVariable Long id) {
-        auditLogService.deleteAuditLog(id);
-        return ResponseEntity.noContent().build();
-    }
 }

@@ -25,6 +25,25 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
     List<Appointment> findByDoctorIdAndAppointmentDateTime(Long doctorId, LocalDateTime appointmentDateTime);
 
+    @Query("select count(a) > 0 from Appointment a where a.doctor.id = :doctorId " +
+            "and a.appointmentDateTime = :time and a.status <> :status " +
+            "and (:excludedId is null or a.id <> :excludedId)")
+    boolean hasConflictingAppointment(@Param("doctorId") Long doctorId, @Param("time") LocalDateTime time,
+                                      @Param("status") STATUS status, @Param("excludedId") Long excludedId);
+
+    @Query("select count(a) > 0 from Appointment a where a.timeSlot.id = :slotId and a.status <> :status " +
+            "and (:excludedId is null or a.id <> :excludedId)")
+    boolean hasConflictingSlotAppointment(@Param("slotId") Long slotId, @Param("status") STATUS status,
+                                          @Param("excludedId") Long excludedId);
+
+    boolean existsByTimeSlotId(Long timeSlotId);
+
+    @Query("select a.doctor.id from Appointment a where a.id = :id")
+    Optional<Long> findDoctorIdById(@Param("id") Long id);
+
+    @Query("select a.id from Appointment a where a.timeSlot.id = :slotId and a.status <> :status")
+    List<Long> findIdsByTimeSlotIdAndStatusNot(@Param("slotId") Long slotId, @Param("status") STATUS status);
+
     Optional<Appointment> findByAppointmentCode(String appointmentCode);
 
     Page<Appointment> findByDoctorId(Long doctorId, Pageable pageable);

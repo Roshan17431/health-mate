@@ -145,7 +145,12 @@ export const DashboardPatient: React.FC<DashboardPatientProps> = ({ user }) => {
       // Refresh current records
       const appsList = await fetchAppointmentsByPatient(patient!.id);
       setAppointments(appsList.reverse());
+      if (selectedDoctor && slotDate) {
+        setAvailableSlots(await fetchTimeSlotsByDate(selectedDoctor.id, slotDate, "AVAILABLE"));
+        setSelectedSlot(null);
+      }
     } catch (err) {
+      setCancelingApp(null);
       setError(err);
     }
   };

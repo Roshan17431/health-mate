@@ -4,6 +4,7 @@ import com.example.health.mate.dto.NotificationDTO;
 import com.example.health.mate.dto.NotificationRequestDTO;
 import com.example.health.mate.service.NotificationService;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -30,6 +31,7 @@ public class NotificationController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<NotificationDTO> createNotification(
             @Valid @RequestBody NotificationRequestDTO request
     ) {
@@ -37,31 +39,37 @@ public class NotificationController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("@access.notification(#id)")
     public ResponseEntity<NotificationDTO> getNotificationById(@PathVariable Long id) {
         return ResponseEntity.ok(notificationService.getNotificationById(id));
     }
 
     @GetMapping("/user/{userId}")
+    @PreAuthorize("@access.ownUser(#userId)")
     public ResponseEntity<List<NotificationDTO>> getNotificationsByUser(@PathVariable Long userId) {
         return ResponseEntity.ok(notificationService.getNotificationsByUser(userId));
     }
 
     @GetMapping("/user/{userId}/unread")
+    @PreAuthorize("@access.ownUser(#userId)")
     public ResponseEntity<List<NotificationDTO>> getUnreadNotificationsByUser(@PathVariable Long userId) {
         return ResponseEntity.ok(notificationService.getUnreadNotificationsByUser(userId));
     }
 
     @GetMapping("/user/{userId}/unread-count")
+    @PreAuthorize("@access.ownUser(#userId)")
     public ResponseEntity<Map<String, Long>> countUnreadNotifications(@PathVariable Long userId) {
         return ResponseEntity.ok(Map.of("count", notificationService.countUnreadNotifications(userId)));
     }
 
     @PatchMapping("/{id}/read")
+    @PreAuthorize("@access.notification(#id)")
     public ResponseEntity<NotificationDTO> markAsRead(@PathVariable Long id) {
         return ResponseEntity.ok(notificationService.markAsRead(id));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@access.notification(#id)")
     public ResponseEntity<Void> deleteNotification(@PathVariable Long id) {
         notificationService.deleteNotification(id);
         return ResponseEntity.noContent().build();

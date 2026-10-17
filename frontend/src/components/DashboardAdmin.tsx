@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { StaffAccountForm } from "./StaffAccountForm";
 import React, { useState, useEffect, useId } from "react";
 import { Users, ShieldCheck, UserMinus, Plus, Bell, Trash2, Calendar, ClipboardList, PenTool, Edit3, Save, Layers, HeartPulse } from "lucide-react";
 import {
@@ -104,6 +105,7 @@ export const DashboardAdmin: React.FC = () => {
       setDeletingUser(null);
       loadAllSystemData();
     } catch (err) {
+      setDeletingUser(null);
       setError(err);
     }
   };
@@ -191,7 +193,7 @@ export const DashboardAdmin: React.FC = () => {
           deletingUser ? deletingUser.id : ""
         } (${
           deletingUser ? deletingUser.email : ""
-        })? This will also purge associated patient or doctor department records.`}
+        })? Accounts with appointment history are protected from deletion.`}
         confirmLabel="Delete account"
         cancelLabel="Keep account"
         isDestructive={true}
@@ -285,6 +287,7 @@ export const DashboardAdmin: React.FC = () => {
               <h3 className="text-sm font-semibold text-slate-950">Your clinic community</h3>
             </div>
 
+            <StaffAccountForm onCreated={loadAllSystemData} />
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
