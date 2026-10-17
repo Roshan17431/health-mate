@@ -22,13 +22,15 @@ public class PasswordResetService {
     private final OtpTokenRepository otps;
     private final PasswordEncoder encoder;
     private final PasswordResetTokens tokens;
+    private final AuditLogService audit;
 
     public PasswordResetService(UserRepository users, OtpTokenRepository otps,
-                                PasswordEncoder encoder, PasswordResetTokens tokens) {
+                                PasswordEncoder encoder, PasswordResetTokens tokens, AuditLogService audit) {
         this.users = users;
         this.otps = otps;
         this.encoder = encoder;
         this.tokens = tokens;
+        this.audit = audit;
     }
 
     @Transactional
@@ -59,5 +61,6 @@ public class PasswordResetService {
         }
         user.setPassword(encoder.encode(request.newPassword()));
         users.save(user);
+        audit.logAction(user.getId(), "PASSWORD_RESET", "Password updated after OTP verification");
     }
 }

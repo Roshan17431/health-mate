@@ -33,6 +33,7 @@ public class JwtService {
                 .map(GrantedAuthority::getAuthority)
                 .toList();
         claims.put("authorities", authorities);
+        claims.put("credential", CredentialFingerprint.of(userDetails.getPassword()));
 
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtProperties.getExpirationMs());
@@ -54,7 +55,8 @@ public class JwtService {
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
         String username = extractUsername(token);
-        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+        return username.equals(userDetails.getUsername()) && !isTokenExpired(token)
+                && CredentialFingerprint.of(userDetails.getPassword()).equals(extractAllClaims(token).get("credential", String.class));
     }
 
 

@@ -46,6 +46,7 @@ class AccountIntegrityIntegrationTests extends ApiIntegrationSupport {
     @Autowired DoctorScheduleRepository schedules;
     @Autowired TimeSlotRepository slots;
     @Autowired AuditLogRepository audits;
+    @Autowired com.example.health.mate.service.AuditLogService auditService;
     @Autowired NotificationRepository notifications;
 
     @ParameterizedTest
@@ -129,6 +130,7 @@ class AccountIntegrityIntegrationTests extends ApiIntegrationSupport {
         assertThat(notifications.existsById(notificationId)).isFalse();
         AuditLog audit = audits.findById(auditId).orElseThrow();
         assertThat(audit.getUser()).isNull();
+        assertThat(auditService.toDto(audit).getUserId()).isEqualTo(user.getId());
         assertThat(audit.getAction()).isEqualTo("ACCOUNT_REVIEWED");
         assertThat(audit.getDetails()).isEqualTo("Keep this historical record");
         if (scheduling != null) {

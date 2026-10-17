@@ -6,6 +6,7 @@ import com.example.health.mate.dto.OtpVerificationRequestDTO;
 import com.example.health.mate.dto.SendOtpRequestDTO;
 import com.example.health.mate.service.OtpTokenService;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -30,8 +31,9 @@ public class OtpTokenController {
     }
 
     @PostMapping("/send")
-    public ResponseEntity<OtpTokenDTO> createOtp(@Valid @RequestBody SendOtpRequestDTO request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(otpTokenService.createOtp(request));
+    public ResponseEntity<java.util.Map<String, String>> createOtp(@Valid @RequestBody SendOtpRequestDTO request) {
+        otpTokenService.createOtp(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(java.util.Map.of("message", "Verification email sent. Check your inbox for the code."));
     }
 
     @PostMapping("/verify")
@@ -40,6 +42,7 @@ public class OtpTokenController {
     }
 
     @GetMapping("/latest")
+    @PreAuthorize("@access.ownEmail(#email)")
     public ResponseEntity<OtpTokenDTO> getLatestOtp(
             @RequestParam String email,
             @RequestParam OtpPurpose purpose
@@ -48,11 +51,13 @@ public class OtpTokenController {
     }
 
     @GetMapping
+    @PreAuthorize("@access.ownEmail(#email)")
     public ResponseEntity<List<OtpTokenDTO>> getOtpsByEmail(@RequestParam String email) {
         return ResponseEntity.ok(otpTokenService.getOtpsByEmail(email));
     }
 
     @DeleteMapping("/expired")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteExpiredOtps() {
         otpTokenService.deleteExpiredOtps();
         return ResponseEntity.noContent().build();

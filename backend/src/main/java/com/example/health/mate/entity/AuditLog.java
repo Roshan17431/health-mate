@@ -23,6 +23,15 @@ public class AuditLog {
     @JoinColumn(name = "user_id")
     private User user;
 
+    // Durable attribution survives removal of the live user relationship.
+    @Column(updatable = false)
+    private Long actorUserId;
+
+    @PrePersist
+    private void snapshotActor() {
+        if (actorUserId == null && user != null) actorUserId = user.getId();
+    }
+
     @Column(nullable = false, length = 500)
     private String action;
 

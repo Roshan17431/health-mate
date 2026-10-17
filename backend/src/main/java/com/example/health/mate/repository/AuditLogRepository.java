@@ -16,11 +16,12 @@ import java.util.List;
 public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
 
     @Modifying
-    @Query("update AuditLog a set a.user = null where a.user.id = :userId")
+    @Query("update AuditLog a set a.actorUserId = coalesce(a.actorUserId, a.user.id), a.user = null where a.user.id = :userId")
     void unlinkUser(@Param("userId") Long userId);
 
     List<AuditLog> findAllByOrderByTimestampDesc();
 
+    @Query("select a from AuditLog a where coalesce(a.actorUserId, a.user.id) = :userId order by a.timestamp desc")
     Page<AuditLog> findByUserIdOrderByTimestampDesc(Long userId, Pageable pageable);
 
     List<AuditLog> findByTimestampBetween(LocalDateTime start, LocalDateTime end);

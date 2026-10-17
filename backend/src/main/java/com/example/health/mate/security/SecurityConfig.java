@@ -20,9 +20,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final com.example.health.mate.service.AuditLogService audit;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, com.example.health.mate.service.AuditLogService audit) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.audit = audit;
     }
 
 
@@ -32,6 +34,15 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(errors -> errors
+                        .authenticationEntryPoint((request, response, ex) -> {
+                            response.setStatus(401); response.setContentType("application/json");
+                            response.getWriter().write("{\"statusCode\":401,\"message\":\"Please sign in again.\"}");
+                        })
+                        .accessDeniedHandler((request, response, ex) -> {
+                            response.setStatus(403); response.setContentType("application/json");
+                            response.getWriter().write("{\"statusCode\":403,\"message\":\"You do not have permission for this action.\"}");
+                        }))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/auth/**",
@@ -40,10 +51,13 @@ public class SecurityConfig {
                                 "/actuator/health",
                                 "/actuator/info"
                         ).permitAll()
-                        .requestMatchers("/actuator/**").hasRole("ADMIN")
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/audit-logs/**").denyAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/audit-logs/**").denyAll()
+                        .requestMatchers("/actuator/**", "/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(new AuditTrailFilter(audit), JwtAuthenticationFilter.class)
                 .build();
     }
 
