@@ -34,3 +34,7 @@ npm run build
 ## Deployment
 
 On Render, this frontend is deployed as a static site from the repository root `render.yaml`. Set `VITE_API_BASE_URL` to the deployed backend API URL.
+
+## Production deployment
+
+Use the [deployment plan](../docs/deployment/production-plan.md), [runbook](../docs/deployment/runbook.md), and [readiness report](../docs/deployment/production-readiness-report.md). Production validates the explicitly migrated schema, disables SQL seeds, and requires private configuration. Local staging uses synthetic records and separate services; it does not authorize changes to production.
