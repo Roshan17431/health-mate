@@ -11,6 +11,12 @@ import java.util.Map;
 @RestControllerAdvice
 public class RestExceptionHandler {
 
+    @ExceptionHandler(OtpDeliveryException.class)
+    public ResponseEntity<Map<String, Object>> delivery(OtpDeliveryException ex) {
+        return ResponseEntity.status(503).body(Map.of("statusCode", 503,
+                "message", "Verification email is temporarily unavailable. Please try again later."));
+    }
+
     @ExceptionHandler(OtpRateLimitException.class)
     public ResponseEntity<Map<String, Object>> handleOtpRateLimit(OtpRateLimitException ex) {
         return ResponseEntity.status(429).header("Retry-After", Long.toString(ex.getRetryAfterSeconds()))

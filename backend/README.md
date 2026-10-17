@@ -150,6 +150,28 @@ spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
 ```
 
+### Configure OTP Email
+
+Copy `.env.example` to `.env` in the backend directory and set `SMTP_HOST`,
+`SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, and `SMTP_FROM` using your email
+provider's SMTP credentials and a sender address verified with that provider.
+Keep `.env` private. Port 587 defaults to authenticated SMTP with STARTTLS
+required and server certificate identity checking enabled. For a provider that
+requires implicit TLS on port 465, set `SMTP_SSL_ENABLED=true`,
+`SMTP_STARTTLS_ENABLED=false`, and `SMTP_STARTTLS_REQUIRED=false`.
+
+OTP issuance sends the six-digit code to the requested email address. Codes
+expire in 10 minutes and are never returned in the send response. Missing SMTP
+configuration or failed delivery returns a generic service-unavailable response;
+the failed attempt leaves no new OTP row in the database. The existing account
+and IP rate limits still apply to delivery attempts.
+
+For a local SMTP sink, point `SMTP_HOST=localhost` and `SMTP_PORT` to the sink's
+SMTP listener and use a test-only `SMTP_FROM`. Set `SMTP_AUTH=false`,
+`SMTP_STARTTLS_ENABLED=false`, and `SMTP_STARTTLS_REQUIRED=false` only for that
+local sink. Integration tests start their own loopback SMTP sink on an ephemeral
+port and use H2; no external emails or production database writes are needed.
+
 ### Run Application
 
 ```bash

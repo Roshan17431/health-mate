@@ -29,14 +29,16 @@ public class OtpTokenService {
     private final UserRepository userRepository;
     private final PasswordResetTokens resetTokens;
     private final OtpRequestLimiter limiter;
+    private final OtpEmailService emailService;
     private final SecureRandom secureRandom = new SecureRandom();
 
     public OtpTokenService(OtpTokenRepository otpTokenRepository, UserRepository userRepository,
-                           PasswordResetTokens resetTokens, OtpRequestLimiter limiter) {
+                           PasswordResetTokens resetTokens, OtpRequestLimiter limiter, OtpEmailService emailService) {
         this.otpTokenRepository = otpTokenRepository;
         this.userRepository = userRepository;
         this.resetTokens = resetTokens;
         this.limiter = limiter;
+        this.emailService = emailService;
     }
 
 
@@ -49,7 +51,9 @@ public class OtpTokenService {
         otpToken.setCreatedAt(LocalDateTime.now());
         otpToken.setExpiresAt(LocalDateTime.now().plusMinutes(OTP_EXPIRY_MINUTES));
         otpToken.setIsUsed(Boolean.FALSE);
-        return toDto(otpTokenRepository.save(otpToken));
+        OtpToken stored = otpTokenRepository.save(otpToken);
+        emailService.send(stored);
+        return toDto(stored);
     }
 
 
