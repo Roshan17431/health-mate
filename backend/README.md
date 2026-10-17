@@ -239,4 +239,8 @@ Before upgrading an existing PostgreSQL database, back it up and stop applicatio
 
 Account/profile deletion returns HTTP 409 when appointment history exists. Unlinking an unused clinical profile preserves its user account. Audit events come from the server, retain actor IDs after account deletion, and cannot be created/deleted through the API. Password reset invalidates previously issued access tokens; older tokens without a credential fingerprint require sign-in again.
 
-Production startup requires `JWT_SECRET` (a private Base64 signing key of at least 32 random bytes). Schema changes and seed data are disabled by default in the production profile (`HIBERNATE_DDL_AUTO=none`, `SQL_INIT_MODE=never`). Use explicit schema setup only for a new disposable database or a reviewed deployment migration. Keep SMTP credentials and JWT signing keys out of Git.
+Production startup requires `JWT_SECRET` (a private Base64 signing key of at least 32 random bytes). The production profile fixes `ddl-auto=validate` and SQL initialization to `never`; schema creation and seeds require explicit operator actions. Use explicit schema setup only for a new empty database or a reviewed deployment migration. Keep SMTP credentials and JWT signing keys out of Git.
+
+## Production deployment
+
+Use the [deployment plan](../docs/deployment/production-plan.md), [runbook](../docs/deployment/runbook.md), and [readiness report](../docs/deployment/production-readiness-report.md). Production validates the explicitly migrated schema, disables SQL seeds, and requires private configuration. Local staging uses synthetic records and separate services; it does not authorize changes to production.

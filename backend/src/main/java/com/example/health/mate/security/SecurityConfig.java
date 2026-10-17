@@ -21,10 +21,14 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final com.example.health.mate.service.AuditLogService audit;
+    private final LoginRequestLimiter loginLimiter;
+    private final tools.jackson.databind.ObjectMapper json;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, com.example.health.mate.service.AuditLogService audit) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, com.example.health.mate.service.AuditLogService audit, LoginRequestLimiter loginLimiter, tools.jackson.databind.ObjectMapper json) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.audit = audit;
+        this.loginLimiter = loginLimiter;
+        this.json = json;
     }
 
 
@@ -49,6 +53,7 @@ public class SecurityConfig {
                                 "/api/otp/send",
                                 "/api/otp/verify",
                                 "/actuator/health",
+                                "/actuator/health/**",
                                 "/actuator/info"
                         ).permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/audit-logs/**").denyAll()
@@ -57,6 +62,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new LoginRateLimitFilter(loginLimiter, json), JwtAuthenticationFilter.class)
                 .addFilterAfter(new AuditTrailFilter(audit), JwtAuthenticationFilter.class)
                 .build();
     }

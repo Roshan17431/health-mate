@@ -15,6 +15,9 @@ spring:
       mode: never
 
 security:
+  login-rate-limit:
+    ip-limit: 1000
+    account-limit: 100
   jwt:
     secret: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
     expiration-ms: 86400000

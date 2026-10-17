@@ -1,12 +1,16 @@
 spring:
+  datasource:
+    url: ${DB_URL:}
+    username: ${DB_USERNAME:}
+    password: ${DB_PASSWORD:}
   jpa:
-    defer-datasource-initialization: true
+    defer-datasource-initialization: false
     hibernate:
-      ddl-auto: ${HIBERNATE_DDL_AUTO:none}
+      ddl-auto: validate
     show-sql: false
   sql:
     init:
-      mode: ${SQL_INIT_MODE:never}
+      mode: never
 
 management:
   endpoints:
@@ -18,6 +22,11 @@ management:
       show-details: never
       probes:
         enabled: true
+      group:
+        readiness:
+          include: readinessState,db
+        liveness:
+          include: livenessState
 
 logging:
   level:
@@ -27,3 +36,20 @@ logging:
 security:
   jwt:
     secret: ${JWT_SECRET:}
+
+server:
+  forward-headers-strategy: native
+  shutdown: graceful
+  error:
+    include-message: never
+    include-stacktrace: never
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:}
+    allow-credentials: false

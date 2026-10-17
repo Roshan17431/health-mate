@@ -1,0 +1,50 @@
+name: healthmate
+services:
+  backend:
+    image: ${BACKEND_IMAGE:-healthmate-backend:phase3}
+    build:
+      context: ./backend
+    env_file:
+      - ${BACKEND_ENV_FILE:-./deploy/backend.env}
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SERVER_PORT: "8080"
+    expose: ["8080"]
+    init: true
+    user: "10001:10001"
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=128m"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 256
+    mem_limit: 768m
+    stop_grace_period: 40s
+    restart: unless-stopped
+    networks: [app]
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+  frontend:
+    image: ${FRONTEND_IMAGE:-healthmate-frontend:phase3}
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: /
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports: ["127.0.0.1:${HTTP_PORT:-8088}:8080"]
+    user: "101:101"
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=32m"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 64
+    mem_limit: 128m
+    restart: unless-stopped
+    networks: [app]
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+networks:
+  app: {}

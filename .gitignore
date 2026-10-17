@@ -35,3 +35,13 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Private deployment inputs and clinical backups
+/deploy/*.env
+/deploy/secrets/
+/deploy/backups/
+
+# Local Python verification caches
+__pycache__/
+*.pyc
+/.playwright-cli/

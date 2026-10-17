@@ -1,0 +1,37 @@
+# Local-only rehearsal. Never use this override for public production deployment.
+services:
+  backend:
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    environment:
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      SMTP_FROM: healthmate@example.test
+      SMTP_AUTH: "false"
+      SMTP_STARTTLS_ENABLED: "false"
+      SMTP_STARTTLS_REQUIRED: "false"
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: healthmate_owner
+      POSTGRES_DB: healthmate_staging
+      POSTGRES_PASSWORD: ${STAGING_OWNER_PASSWORD:?staging owner credential required}
+    ports: ["127.0.0.1:${STAGING_DB_PORT:-55433}:5432"]
+    volumes: ["staging-db:/var/lib/postgresql/data"]
+    networks: [app]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U healthmate_owner -d healthmate_staging"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+  mailpit:
+    image: axllent/mailpit@sha256:23fe39e81bde596a918000b3135c0f85dc8bb4c9ea6be274b051143f3e300387
+    ports: ["127.0.0.1:${STAGING_MAIL_PORT:-18026}:8025"]
+    networks: [app]
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=32m"]
+volumes:
+  staging-db: {}

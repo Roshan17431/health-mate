@@ -1,0 +1,3 @@
+# Copy as secrets/pgpass with mode 600. Replace only in that private copy.
+db.example.com:5432:healthmate:healthmate_owner:<private-owner-password>
+db.example.com:5432:healthmate_recovery:healthmate_owner:<private-owner-password>

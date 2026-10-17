@@ -1,0 +1,8 @@
+# Operator-reviewed HTTP-context trust configuration for the actual TLS edge.
+services:
+  frontend:
+    volumes:
+      - type: bind
+        source: ${EDGE_TRUST_CONFIG_FILE:?Set EDGE_TRUST_CONFIG_FILE to the reviewed edge trust config}
+        target: /etc/nginx/healthmate-edge.conf
+        read_only: true
